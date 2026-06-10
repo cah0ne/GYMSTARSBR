@@ -50,13 +50,15 @@ import {
   Search,
   Volume2,
   LayoutDashboard,
-  ChevronDown
+  ChevronDown,
+  FileText
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserData } from "../App";
 import { useOutletContext, Navigate } from "react-router-dom";
 import clsx from "clsx";
 import VerifiedBadge from "../components/VerifiedBadge";
+import { RichTextEditor } from "../components/RichTextEditor";
 
 export default function AdminPage() {
   const { userData } = useOutletContext<{ userData: UserData | null }>();
@@ -1615,6 +1617,7 @@ function HomepageContentManager() {
                       {bannerLink === "/" ? "Início (Home)" :
                        bannerLink === "/competitions" ? "Competições" :
                        bannerLink === "/gymnasts" ? "Ginastas" :
+                       bannerLink === "/courses" ? "Cursos" :
                        bannerLink === "/referee" ? "Arbitragem" :
                        bannerLink === "/elements" ? "Quadro de Elementos" :
                        bannerLink === "/chat" ? "Chat GYMSTARS" :
@@ -1636,6 +1639,7 @@ function HomepageContentManager() {
                                   { val: "/", label: "Início (Home)" },
                                   { val: "/competitions", label: "Competições" },
                                   { val: "/gymnasts", label: "Ginastas" },
+                                  { val: "/courses", label: "Cursos" },
                                   { val: "/referee", label: "Arbitragem" },
                                   { val: "/elements", label: "Quadro de Elementos" },
                                   { val: "/chat", label: "Chat GYMSTARS" },
@@ -1712,17 +1716,33 @@ function HomepageContentManager() {
               </div>
 
               {/* Preview */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-0 flex flex-col items-center justify-center relative overflow-hidden aspect-[3/1] w-full mt-4 md:mt-0">
-                 {bannerType === "upload" && bannerBase64 ? (
-                    <img src={bannerBase64} alt="Outdoor Preview" className="w-full h-full object-cover pointer-events-none select-none" />
-                 ) : bannerType === "url" && bannerUrl ? (
-                    <img src={bannerUrl} alt="Outdoor Preview" className="w-full h-full object-cover pointer-events-none select-none" />
-                 ) : (
-                    <div className="text-slate-600 text-xs font-bold uppercase tracking-widest text-center flex flex-col items-center gap-2">
-                      <LayoutDashboard className="w-6 h-6 opacity-40" />
-                      Sem Mídia
-                    </div>
-                 )}
+              <div className="flex flex-col gap-2 w-full mt-4 md:mt-0">
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-0 flex flex-col items-center justify-center relative overflow-hidden aspect-[3/1] w-full">
+                   {bannerType === "upload" && bannerBase64 ? (
+                      <img src={bannerBase64} alt="Outdoor Preview" className="w-full h-full object-cover pointer-events-none select-none" />
+                   ) : bannerType === "url" && bannerUrl ? (
+                      <img src={bannerUrl} alt="Outdoor Preview" className="w-full h-full object-cover pointer-events-none select-none" />
+                   ) : (
+                      <div className="text-slate-600 text-xs font-bold uppercase tracking-widest text-center flex flex-col items-center gap-2">
+                        <LayoutDashboard className="w-6 h-6 opacity-40" />
+                        Sem Mídia
+                      </div>
+                   )}
+                </div>
+                
+                {((bannerType === "upload" && bannerBase64) || (bannerType === "url" && bannerUrl)) && (
+                  <button
+                    onClick={() => {
+                      setBannerEnabled(false);
+                      setBannerBase64("");
+                      setBannerUrl("");
+                    }}
+                    className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs font-bold transition-colors flex justify-center items-center gap-2 border border-red-500/20"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Remover Anúncio
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -3014,6 +3034,7 @@ function AppBrandingManager() {
                  { id: "inicio", label: "Início" },
                  { id: "quemSomos", label: "Quem Somos" },
                  { id: "competicoes", label: "Competições" },
+                 { id: "cursos", label: "Cursos" },
                  { id: "codigo", label: "Código" },
                  { id: "elementos", label: "Elementos" },
                  { id: "ginastas", label: "Ginastas" },
@@ -3559,11 +3580,26 @@ function CoursesManager() {
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [status, setStatus] = useState<"Rascunho" | "Publicado">("Rascunho");
+  const [cargaHoraria, setCargaHoraria] = useState<number>(20);
+  const [registrationStatus, setRegistrationStatus] = useState<"Aberto" | "Fechado">("Aberto");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Custom persistent course components
+  const [guidelinesPdf, setGuidelinesPdf] = useState("");
+  const [guidelinesPdfName, setGuidelinesPdfName] = useState("");
+  const [lessons, setLessons] = useState<any[]>([]);
+  const [newLessonTitle, setNewLessonTitle] = useState("");
+  const [newLessonDate, setNewLessonDate] = useState("");
+  const [newLessonTime, setNewLessonTime] = useState("");
+
+  // Users and Student management state
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
   useEffect(() => {
+    // Sync Courses
     const q = query(
       collection(db, "appContent"),
       where("type", "==", "course"),
@@ -3579,6 +3615,14 @@ function CoursesManager() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    // Sync Users for resolving student profiles
+    const unsub = onSnapshot(collection(db, "users"), (snap) => {
+      setUsers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsub();
+  }, []);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -3587,6 +3631,47 @@ function CoursesManager() {
       setCoverImage(event.target?.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      alert("Por favor, selecione apenas arquivos em formato PDF.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setGuidelinesPdf(event.target?.result as string);
+      setGuidelinesPdfName(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearPdf = () => {
+    setGuidelinesPdf("");
+    setGuidelinesPdfName("");
+  };
+
+  const handleAddLesson = () => {
+    if (!newLessonTitle || !newLessonDate || !newLessonTime) {
+      alert("Por favor, preencha o título, a data e o horário da aula.");
+      return;
+    }
+    const newLesson = {
+      id: Math.random().toString(36).substring(2, 9),
+      title: newLessonTitle.trim(),
+      date: newLessonDate,
+      time: newLessonTime,
+    };
+    setLessons([...lessons, newLesson]);
+    setNewLessonTitle("");
+    setNewLessonDate("");
+    setNewLessonTime("");
+  };
+
+  const handleRemoveLesson = (lessonId: string) => {
+    setLessons(lessons.filter((l) => l.id !== lessonId));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -3601,6 +3686,11 @@ function CoursesManager() {
           description,
           coverImage,
           status,
+          cargaHoraria: Number(cargaHoraria) || 20,
+          registrationStatus,
+          guidelinesPdf: guidelinesPdf || "",
+          guidelinesPdfName: guidelinesPdfName || "",
+          lessons: lessons || [],
           updatedAt: Date.now()
         });
       } else {
@@ -3610,7 +3700,15 @@ function CoursesManager() {
           description,
           coverImage,
           status,
-          createdAt: Date.now()
+          cargaHoraria: Number(cargaHoraria) || 20,
+          registrationStatus,
+          guidelinesPdf: guidelinesPdf || "",
+          guidelinesPdfName: guidelinesPdfName || "",
+          lessons: lessons || [],
+          createdAt: Date.now(),
+          enrolledUsers: [],
+          completedUsers: [],
+          certificates: {}
         });
       }
 
@@ -3619,6 +3717,14 @@ function CoursesManager() {
       setDescription("");
       setCoverImage("");
       setStatus("Rascunho");
+      setCargaHoraria(20);
+      setRegistrationStatus("Aberto");
+      setGuidelinesPdf("");
+      setGuidelinesPdfName("");
+      setLessons([]);
+      setNewLessonTitle("");
+      setNewLessonDate("");
+      setNewLessonTime("");
       setEditingId(null);
     } catch (err) {
       console.error("Erro ao salvar curso:", err);
@@ -3633,12 +3739,18 @@ function CoursesManager() {
     setDescription(course.description || "");
     setCoverImage(course.coverImage || "");
     setStatus(course.status || "Rascunho");
+    setCargaHoraria(course.cargaHoraria || 20);
+    setRegistrationStatus(course.registrationStatus || "Aberto");
+    setGuidelinesPdf(course.guidelinesPdf || "");
+    setGuidelinesPdfName(course.guidelinesPdfName || "");
+    setLessons(course.lessons || []);
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Deseja realmente deletar este curso? Isso é irreversível.")) return;
     try {
       await deleteDoc(doc(db, "appContent", id));
+      if (selectedCourseId === id) setSelectedCourseId(null);
     } catch (err) {
       console.error("Erro ao deletar:", err);
     }
@@ -3650,7 +3762,89 @@ function CoursesManager() {
     setDescription("");
     setCoverImage("");
     setStatus("Rascunho");
+    setCargaHoraria(20);
+    setRegistrationStatus("Aberto");
+    setGuidelinesPdf("");
+    setGuidelinesPdfName("");
+    setLessons([]);
+    setNewLessonTitle("");
+    setNewLessonDate("");
+    setNewLessonTime("");
   };
+
+  // Student specific updates
+  const handleToggleCompleted = async (course: any, studentId: string) => {
+    const list = course.completedUsers || [];
+    let updatedCompleted: string[];
+    if (list.includes(studentId)) {
+      updatedCompleted = list.filter((id: string) => id !== studentId);
+    } else {
+      updatedCompleted = [...list, studentId];
+    }
+
+    try {
+      await updateDoc(doc(db, "appContent", course.id), {
+        completedUsers: updatedCompleted
+      });
+    } catch (err) {
+      console.error("Erro ao atualizar status de conclusão do aluno:", err);
+    }
+  };
+
+  const handleToggleModuleCompleted = async (course: any, studentId: string, moduleKey: "m1" | "m2" | "m3") => {
+    const modulesMap = course.completedModulesByStudent || {};
+    const studentModules = modulesMap[studentId] || { m1: false, m2: false, m3: false };
+    
+    const updatedStudentModules = {
+      ...studentModules,
+      [moduleKey]: !studentModules[moduleKey]
+    };
+
+    const updatedModulesMap = {
+      ...modulesMap,
+      [studentId]: updatedStudentModules
+    };
+
+    try {
+      await updateDoc(doc(db, "appContent", course.id), {
+        completedModulesByStudent: updatedModulesMap
+      });
+    } catch (err) {
+      console.error("Erro ao atualizar módulo do aluno:", err);
+    }
+  };
+
+  const handleUploadCertificateForUser = async (course: any, studentId: string, base64Image: string) => {
+    const currentCertificates = course.certificates || {};
+    const updatedCertificates = {
+      ...currentCertificates,
+      [studentId]: base64Image
+    };
+
+    try {
+      await updateDoc(doc(db, "appContent", course.id), {
+        certificates: updatedCertificates
+      });
+    } catch (err) {
+      console.error("Erro ao salvar certificado para o aluno:", err);
+    }
+  };
+
+  const handleRemoveCertificateForUser = async (course: any, studentId: string) => {
+    const currentCertificates = course.certificates || {};
+    const updatedCertificates = { ...currentCertificates };
+    delete updatedCertificates[studentId];
+
+    try {
+      await updateDoc(doc(db, "appContent", course.id), {
+        certificates: updatedCertificates
+      });
+    } catch (err) {
+      console.error("Erro ao deletar certificado do aluno:", err);
+    }
+  };
+
+  const activeCourse = courses.find((c) => c.id === selectedCourseId);
 
   return (
     <div className="bg-[#0A1221] border border-slate-800 p-6 sm:p-8 rounded-[2.5rem] space-y-8 relative overflow-hidden">
@@ -3692,18 +3886,48 @@ function CoursesManager() {
               />
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Carga Horária (horas)
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  value={cargaHoraria}
+                  onChange={(e) => setCargaHoraria(Number(e.target.value))}
+                  placeholder="Ex: 20"
+                  className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Período de Inscrição
+                </label>
+                <select
+                  value={registrationStatus}
+                  onChange={(e) => setRegistrationStatus(e.target.value as any)}
+                  className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all"
+                >
+                  <option value="Aberto" className="bg-[#0A1221]">🟢 Aberto (Aceitando Inscrições)</option>
+                  <option value="Fechado" className="bg-[#0A1221]">🔴 Fechado (Inscrições Encerradas)</option>
+                </select>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
                 Descrição do Curso
               </label>
-              <textarea
-                required
-                rows={4}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva detalhadamente o conteúdo programático, as datas das aulas, carga horária e quem pode se inscrever..."
-                className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all resize-none"
-              />
+              <div className="bg-slate-950/60 border border-slate-800 rounded-2xl overflow-hidden quill-dark p-1">
+                <RichTextEditor 
+                  value={description} 
+                  onChange={setDescription} 
+                  placeholder="Descreva detalhadamente o conteúdo programático, as datas das aulas, carga horária e quem pode se inscrever..." 
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -3780,6 +4004,132 @@ function CoursesManager() {
               </div>
             )}
 
+            {/* Material de Apoio Geral - Upload de PDF */}
+            <div className="space-y-2 pt-2">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Material de Apoio Geral (Upload de PDF)
+              </label>
+              <div className="border border-dashed border-slate-800 hover:border-[#009c3b]/50 rounded-2xl p-4 transition-all duration-300 relative text-center bg-black/10 group">
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <div className="bg-slate-900 group-hover:bg-[#009c3b]/10 p-2.5 rounded-xl transition-colors">
+                    <FileText className="w-5 h-5 text-slate-500 group-hover:text-[#009c3b]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-500 group-hover:text-slate-400 transition-colors">
+                    {guidelinesPdfName ? `PDF Selecionado: ${guidelinesPdfName}` : "Selecionar PDF do Manual"}
+                  </span>
+                </div>
+              </div>
+              {guidelinesPdf && (
+                <div className="flex items-center justify-between bg-black/40 border border-slate-850 px-3.5 py-2.5 rounded-2xl mt-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <FileText className="w-4 h-4 text-[#009c3b] shrink-0" />
+                    <span className="text-[11px] text-slate-300 font-medium truncate">{guidelinesPdfName || "Manual_Diretrizes.pdf"}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearPdf}
+                    className="text-red-400 hover:text-red-300 text-xs font-bold pl-3 shrink-0"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Aulas e Cronograma de Aulas Presenciais/Live */}
+            <div className="bg-black/20 border border-slate-850 p-4 rounded-2xl space-y-3.5 mt-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[11px] font-black uppercase tracking-wider text-[#009c3b]">
+                  Aulas e Cronograma do Curso
+                </h4>
+                <span className="text-[9px] font-bold text-slate-500 font-mono">
+                  {lessons.length} cadastrada(s)
+                </span>
+              </div>
+
+              {/* Lesson creation inputs */}
+              <div className="space-y-3.5 pt-1">
+                <div className="space-y-1">
+                  <label className="block text-[8px] font-black uppercase tracking-wider text-slate-500">
+                    Título da Aula / Horário Especial
+                  </label>
+                  <input
+                    type="text"
+                    value={newLessonTitle}
+                    onChange={(e) => setNewLessonTitle(e.target.value)}
+                    placeholder="Ex: Aula Inaugural + Regras Básicas"
+                    className="w-full bg-slate-950 border border-slate-850 focus:border-[#009c3b] rounded-xl px-3 py-2 text-white text-xs outline-none transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="block text-[8px] font-black uppercase tracking-wider text-slate-500">
+                      Data
+                    </label>
+                    <input
+                      type="date"
+                      value={newLessonDate}
+                      onChange={(e) => setNewLessonDate(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-[#009c3b] rounded-xl px-3 py-2 text-white text-xs outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[8px] font-black uppercase tracking-wider text-slate-500">
+                      Horário
+                    </label>
+                    <input
+                      type="time"
+                      value={newLessonTime}
+                      onChange={(e) => setNewLessonTime(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-850 focus:border-[#009c3b] rounded-xl px-3 py-2 text-white text-xs outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddLesson}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] uppercase tracking-wider py-2.5 rounded-xl transition active:scale-98 border border-slate-800"
+                >
+                  + Adicionar Aula ao Curso
+                </button>
+              </div>
+
+              {/* List of currently created lessons inside form */}
+              {lessons.length > 0 && (
+                <div className="space-y-1.5 pt-2 border-t border-slate-850/60 max-h-48 overflow-y-auto pr-1">
+                  {lessons.map((less: any) => (
+                    <div
+                      key={less.id}
+                      className="flex items-center justify-between gap-3 bg-slate-950/40 p-2.5 rounded-xl border border-slate-900"
+                    >
+                      <div className="text-left">
+                        <span className="block text-[10px] text-white font-bold leading-tight">{less.title}</span>
+                        <span className="text-[8px] font-mono font-bold text-[#009c3b] uppercase tracking-wider">
+                          🗓 {less.date.split('-').reverse().join('/')} às {less.time}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLesson(less.id)}
+                        className="text-red-400 hover:text-red-300 p-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex gap-3 pt-2">
               {editingId && (
                 <button
@@ -3804,13 +4154,13 @@ function CoursesManager() {
         {/* List Column */}
         <div className="space-y-4">
           <h3 className="text-sm font-black text-white uppercase tracking-wider italic flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-indigo-400" />
+            <BookOpen className="w-4 h-4 text-[#009c3b]" />
             Cursos Cadastrados ({courses.length})
           </h3>
 
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center gap-3 bg-black/15 border border-slate-850 rounded-3xl">
-              <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[#009c3b]/30 border-t-[#009c3b] rounded-full animate-spin" />
               <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Carregando lista...</span>
             </div>
           ) : courses.length === 0 ? (
@@ -3819,11 +4169,14 @@ function CoursesManager() {
               <p className="text-xs text-slate-500 font-medium">Nenhum curso cadastrado ainda.</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
               {courses.map((course) => (
                 <div
                   key={course.id}
-                  className="bg-black/25 hover:bg-black/40 p-4 rounded-2xl border border-slate-850 flex items-center justify-between gap-4 transition-all group/item"
+                  className={clsx(
+                    "bg-black/25 hover:bg-black/40 p-4 rounded-2xl border flex items-center justify-between gap-4 transition-all group/item",
+                    selectedCourseId === course.id ? "border-[#009c3b]" : "border-slate-850"
+                  )}
                 >
                   <div className="flex items-center gap-3.5 overflow-hidden">
                     {course.coverImage ? (
@@ -3836,7 +4189,7 @@ function CoursesManager() {
                       </div>
                     )}
                     <div className="overflow-hidden">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex gap-2 items-center mb-1">
                         <h4 className="text-xs font-black text-white uppercase tracking-tight truncate line-clamp-1 group-hover/item:text-[#009c3b] transition-colors">{course.title}</h4>
                         <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
                           course.status === "Publicado" 
@@ -3846,13 +4199,37 @@ function CoursesManager() {
                           {course.status}
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-2">
+                      <p className="text-[10px] text-slate-400 line-clamp-1 mb-1">
                         {course.description}
                       </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">
+                          📚 {course.cargaHoraria || 20} horas
+                        </span>
+                        <span className={`text-[8px] font-bold uppercase ${course.registrationStatus === "Fechado" ? "text-red-500" : "text-emerald-500"}`}>
+                          • Inscrições: {course.registrationStatus || "Aberto"}
+                        </span>
+                        <span className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest">
+                          • {course.enrolledUsers?.length || 0} inscritos
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => setSelectedCourseId(selectedCourseId === course.id ? null : course.id)}
+                      className={clsx(
+                        "p-2 rounded-xl transition text-[10px] font-black uppercase tracking-widest flex items-center gap-1",
+                        selectedCourseId === course.id 
+                          ? "bg-[#009c3b] text-white" 
+                          : "bg-slate-900 text-slate-400 hover:text-white"
+                      )}
+                      title="Gerenciar Alunos Inscritos"
+                    >
+                      <Users className="w-4 h-4" />
+                      <span className="hidden md:inline">Alunos</span>
+                    </button>
                     <button
                       onClick={() => handleEditSelect(course)}
                       className="p-2 hover:bg-slate-800/80 text-slate-400 hover:text-white rounded-xl transition"
@@ -3874,6 +4251,183 @@ function CoursesManager() {
           )}
         </div>
       </div>
+
+      {/* Student List & Custom Certificates Section */}
+      {activeCourse && (
+        <div className="border-t border-slate-800 pt-8 animate-fadeIn">
+          <div className="bg-black/25 border border-slate-850 p-6 rounded-3xl space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <span className="text-[10px] text-[#009c3b] font-black uppercase tracking-widest">Lista Oficial de Alunos</span>
+                <h3 className="text-lg font-black text-white uppercase italic tracking-tight">{activeCourse.title}</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedCourseId(null)}
+                className="text-slate-400 hover:text-white bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition"
+              >
+                Fechar Alunos
+              </button>
+            </div>
+
+            {(!activeCourse.enrolledUsers || activeCourse.enrolledUsers.length === 0) ? (
+              <div className="py-12 text-center text-slate-500 font-medium text-xs font-sans">
+                <Users className="w-10 h-10 text-slate-850 mx-auto mb-3" />
+                Nenhum aluno inscrito neste curso ainda.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {activeCourse.enrolledUsers.map((studentId: string) => {
+                  const studentProfile = users.find((u) => u.id === studentId || u.uid === studentId);
+                  const isCompleted = activeCourse.completedUsers?.includes(studentId);
+                  const certImage = activeCourse.certificates?.[studentId];
+                  const studentModules = activeCourse.completedModulesByStudent?.[studentId] || { m1: false, m2: false, m3: false };
+
+                  return (
+                    <div 
+                      key={studentId}
+                      className="bg-[#070F1C]/75 border border-slate-850 p-5 rounded-2xl flex flex-col justify-between gap-4 group/st relative"
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-black text-sm text-slate-300">
+                            {studentProfile?.displayName?.substring(0, 2).toUpperCase() || studentProfile?.username?.substring(0,2).toUpperCase() || "?"}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black text-white uppercase tracking-tight">{studentProfile?.displayName || studentProfile?.username || `ID: ${studentId}`}</h4>
+                            <p className="text-[10px] text-slate-500 font-medium">{studentProfile?.email || "Sem e-mail"}</p>
+                          </div>
+                        </div>
+
+                        {/* Completion Toggle Button */}
+                        <button
+                          onClick={() => handleToggleCompleted(activeCourse, studentId)}
+                          className={clsx(
+                            "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
+                            isCompleted 
+                              ? "bg-[#009c3b] border-[#009c3b] text-white shadow-[0_0_10px_rgba(0,156,59,0.2)]" 
+                              : "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white"
+                          )}
+                        >
+                          {isCompleted ? "✓ Aprovado" : "⚡ Aprovar Aluno"}
+                        </button>
+                      </div>
+
+                      {/* Interactive module checkers */}
+                      <div className="bg-black/40 border border-slate-850/60 p-3 rounded-xl space-y-2">
+                        <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400">
+                          Homologação de Módulos (Selecione para concluir)
+                        </span>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {/* Module 1 */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleModuleCompleted(activeCourse, studentId, "m1")}
+                            className={clsx(
+                              "flex items-center justify-between px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition border text-left",
+                              studentModules.m1 
+                                ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-[#009c3b]" 
+                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300"
+                            )}
+                          >
+                            <span>Módulo 1: Introdução Básica</span>
+                            <span>{studentModules.m1 ? "✓ CONCLUÍDO" : "○ PENDENTE"}</span>
+                          </button>
+
+                          {/* Module 2 */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleModuleCompleted(activeCourse, studentId, "m2")}
+                            className={clsx(
+                              "flex items-center justify-between px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition border text-left",
+                              studentModules.m2 
+                                ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-[#009c3b]" 
+                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300"
+                            )}
+                          >
+                            <span>Módulo 2: Técnicas Avançadas</span>
+                            <span>{studentModules.m2 ? "✓ CONCLUÍDO" : "○ PENDENTE"}</span>
+                          </button>
+
+                          {/* Module 3 */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleModuleCompleted(activeCourse, studentId, "m3")}
+                            className={clsx(
+                              "flex items-center justify-between px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition border text-left",
+                              studentModules.m3 
+                                ? "bg-amber-500/10 border-amber-500/30 text-amber-500" 
+                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300"
+                            )}
+                          >
+                            <span>Módulo 3: Prova Presencial</span>
+                            <span>{studentModules.m3 ? "✓ CONCLUÍDO" : "○ PENDENTE"}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Certificate Upload Field spécialement pour cet aluno */}
+                      <div className="border-t border-slate-850/60 pt-4 mt-2">
+                        <span className="block text-[8px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                          Certificado Customizado (PNG)
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                          {certImage ? (
+                            <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-black aspect-[4/3] group-hover/st:border-[#009c3b]/40 transition-colors">
+                              <img src={certImage} alt="" className="w-full h-full object-contain" />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveCertificateForUser(activeCourse, studentId)}
+                                className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white p-1 rounded-full transition shadow-md"
+                                title="Remover Certificado"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="border border-dashed border-slate-800 hover:border-[#009c3b]/40 rounded-xl p-4 text-center bg-black/10 relative cursor-pointer hover:bg-[#009c3b]/5 transition-all">
+                              <input
+                                type="file"
+                                accept="image/png"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (!f) return;
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => {
+                                    handleUploadCertificateForUser(activeCourse, studentId, ev.target?.result as string);
+                                  };
+                                  reader.readAsDataURL(f);
+                                }}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              />
+                              <div className="flex flex-col items-center gap-1.5 pointer-events-none">
+                                <Award className="w-5 h-5 text-slate-600 group-hover/st:text-[#009c3b]" />
+                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                                  Upar Certificado
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="text-[10px] text-slate-500 leading-relaxed">
+                            {certImage ? (
+                              <p className="text-[#009c3b] font-semibold">
+                                ✓ Certificado PNG configurado e disponível para o aluno baixar após a conclusão!
+                              </p>
+                            ) : (
+                              <p>Arraste ou clique para enviar um certificado PNG específico para este aluno para quando ele concluir o curso.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

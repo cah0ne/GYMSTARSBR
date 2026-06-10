@@ -35,19 +35,28 @@ export default function CompetitionDetail() {
   const [livePerformances, setLivePerformances] = useState<any[]>([]);
   const [selectedScore, setSelectedScore] = useState<any>(null);
   const [globalSfx, setGlobalSfx] = useState("");
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const handleStopMusic = async () => {
     try {
       await setDoc(doc(db, "liveCommand", "audio"), {
         action: "stop_music",
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       });
-      setStatusMsg({ text: "Música interrompida para todos!", type: "success" });
+      setStatusMsg({
+        text: "Música interrompida para todos!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
     } catch (e: any) {
       console.error("Error stopping music:", e);
-      setStatusMsg({ text: "Erro ao parar música: " + e.message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao parar música: " + e.message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
     }
   };
@@ -88,9 +97,8 @@ export default function CompetitionDetail() {
       where("competitionId", "==", id),
     );
     const unsubLive = onSnapshot(lq, (snap) => {
-      const perfs = snap.docs
-        .map((d) => ({ id: d.id, ...(d.data() as any) }));
-      
+      const perfs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+
       console.log("Live performances updated:", perfs);
       setLivePerformances(perfs);
     });
@@ -98,79 +106,222 @@ export default function CompetitionDetail() {
   }, [id]);
 
   // Find the performance that matches active tab, or fallback to first one
-  const activeLivePerf = livePerformances.find(p => p.category === activeTab) || livePerformances[0];
+  const activeLivePerf =
+    livePerformances.find((p) => p.category === activeTab) ||
+    livePerformances[0];
 
   const setStatus = async (status: string) => {
     if (!isAdmin || !id) return;
-    
+
     try {
       await updateDoc(doc(db, "competitions", id), { status });
-      
-      if (status === "encerrada" && comp?.type?.includes("Finais")) {
-        
-        const byCat: Record<string, any[]> = {};
-        scores.forEach((s) => {
-          if (!byCat[s.category]) byCat[s.category] = [];
-          byCat[s.category].push(s);
-        });
 
-        for (const cat of Object.keys(byCat)) {
-          const sorted = byCat[cat].sort((a, b) => b.finalScore - a.finalScore);
-          const top3 = sorted.slice(0, 3);
-          
-          for (let i = 0; i < top3.length; i++) {
-             const s = top3[i];
-             if (s.gymnastId) {
-                const badgeColor = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
-                const newBadge = { 
-                   id: Date.now().toString() + Math.random(), 
-                   name: `${badgeColor} Finais ${cat} - ${comp?.name}`, 
-                   imageUrl: "",
-                   competitionId: id
+      if (
+        status === "encerrada" &&
+        (comp?.type?.includes("Finais") ||
+          comp?.type === "Final AA" ||
+          comp?.type === "Final TF")
+      ) {
+        let msg = "";
+
+        if (comp?.type === "Final AA") {
+          const byGymnast: Record<
+            string,
+            { id: string; name: string; total: number }
+          > = {};
+          scores.forEach((s) => {
+            if (s.gymnastId) {
+              if (!byGymnast[s.gymnastId]) {
+                byGymnast[s.gymnastId] = {
+                  id: s.gymnastId,
+                  name: s.gymnastName,
+                  total: 0,
                 };
-                
+              }
+              byGymnast[s.gymnastId].total += s.finalScore;
+            }
+          });
+
+          const sorted = Object.values(byGymnast).sort(
+            (a, b) => b.total - a.total,
+          );
+          const top3 = sorted.slice(0, 3);
+
+          for (let i = 0; i < top3.length; i++) {
+            const badgeColor = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
+            const newBadge = {
+              id: Date.now().toString() + Math.random(),
+              name: `${badgeColor} Final AA - ${comp?.name}`,
+              imageUrl: "",
+              competitionId: id,
+            };
+            const userRef = doc(db, "users", top3[i].id);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const uData = userSnap.data();
+              const badges = uData.badges || [];
+              const medals = uData.medals || { gold: 0, silver: 0, bronze: 0 };
+              if (i === 0) medals.gold = (medals.gold || 0) + 1;
+              if (i === 1) medals.silver = (medals.silver || 0) + 1;
+              if (i === 2) medals.bronze = (medals.bronze || 0) + 1;
+              await updateDoc(userRef, {
+                badges: [...badges, newBadge],
+                medals,
+              });
+            }
+          }
+          msg =
+            "Competição encerrada e medalhas distribuídas para os 3 melhores do Final AA!";
+        } else if (comp?.type === "Final TF") {
+          const byTeam: Record<
+            string,
+            { team: string; total: number }
+          > = {};
+          scores.forEach((s) => {
+            const tName = s.team;
+            if (tName && tName.toLowerCase() !== "independente") {
+              if (!byTeam[tName]) {
+                byTeam[tName] = {
+                  team: tName,
+                  total: 0,
+                };
+              }
+              byTeam[tName].total += s.finalScore;
+            }
+          });
+
+          const sorted = Object.values(byTeam).sort(
+            (a, b) => b.total - a.total,
+          );
+          const top3 = sorted.slice(0, 3);
+
+          if (top3.length > 0) {
+            const usersSnap = await getDocs(collection(db, "users"));
+            const allUsers = usersSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+
+            for (let i = 0; i < top3.length; i++) {
+              const badgeColor = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
+              const newBadge = {
+                id: Date.now().toString() + Math.random(),
+                name: `${badgeColor} Final TF Equipes - ${comp?.name}`,
+                imageUrl: "",
+                competitionId: id,
+              };
+
+              const teamMembers = allUsers.filter((u) => u.team === top3[i].team);
+
+              for (const member of teamMembers) {
+                const userRef = doc(db, "users", member.id);
+                const badges = member.badges || [];
+                const medals = member.medals || {
+                  gold: 0,
+                  silver: 0,
+                  bronze: 0,
+                };
+                if (i === 0) medals.gold = (medals.gold || 0) + 1;
+                if (i === 1) medals.silver = (medals.silver || 0) + 1;
+                if (i === 2) medals.bronze = (medals.bronze || 0) + 1;
+                await updateDoc(userRef, {
+                  badges: [...badges, newBadge],
+                  medals,
+                });
+              }
+            }
+          }
+          msg =
+            "Competição encerrada e medalhas distribuídas para os membros das 3 melhores equipes na Final TF!";
+        } else {
+          const byCat: Record<string, any[]> = {};
+          scores.forEach((s) => {
+            if (!byCat[s.category]) byCat[s.category] = [];
+            byCat[s.category].push(s);
+          });
+
+          for (const cat of Object.keys(byCat)) {
+            const sorted = byCat[cat].sort(
+              (a, b) => b.finalScore - a.finalScore,
+            );
+            const top3 = sorted.slice(0, 3);
+
+            for (let i = 0; i < top3.length; i++) {
+              const s = top3[i];
+              if (s.gymnastId) {
+                const badgeColor = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
+                const newBadge = {
+                  id: Date.now().toString() + Math.random(),
+                  name: `${badgeColor} Finais ${cat} - ${comp?.name}`,
+                  imageUrl: "",
+                  competitionId: id,
+                };
+
                 const userRef = doc(db, "users", s.gymnastId);
                 const userSnap = await getDoc(userRef);
                 if (userSnap.exists()) {
-                   const uData = userSnap.data();
-                   const badges = uData.badges || [];
-                   const medals = uData.medals || { gold: 0, silver: 0, bronze: 0 };
-                   if (i === 0) medals.gold = (medals.gold || 0) + 1;
-                   if (i === 1) medals.silver = (medals.silver || 0) + 1;
-                   if (i === 2) medals.bronze = (medals.bronze || 0) + 1;
-                   
-                   await updateDoc(userRef, { badges: [...badges, newBadge], medals });
+                  const uData = userSnap.data();
+                  const badges = uData.badges || [];
+                  const medals = uData.medals || {
+                    gold: 0,
+                    silver: 0,
+                    bronze: 0,
+                  };
+                  if (i === 0) medals.gold = (medals.gold || 0) + 1;
+                  if (i === 1) medals.silver = (medals.silver || 0) + 1;
+                  if (i === 2) medals.bronze = (medals.bronze || 0) + 1;
+
+                  await updateDoc(userRef, {
+                    badges: [...badges, newBadge],
+                    medals,
+                  });
                 }
-             }
+              }
+            }
           }
+          msg =
+            "Competição encerrada e medalhas distribuídas (Ouro, Prata, Bronze) para os 3 melhores de cada aparelho!";
         }
-        setStatusMsg({ 
-          text: "Competição encerrada e medalhas distribuídas (Ouro, Prata, Bronze) para os 3 melhores de cada aparelho!", 
-          type: "success" 
+
+        setStatusMsg({
+          text: msg,
+          type: "success",
         });
         setTimeout(() => setStatusMsg(null), 8000);
       }
 
       await addDoc(collection(db, "notifications"), {
-        title: status === "ao vivo" ? "⚠ AO VIVO AGORA!" : "Competição Atualizada",
+        title:
+          status === "ao vivo" ? "⚠ AO VIVO AGORA!" : "Competição Atualizada",
         message: `A competição "${comp?.name}" está agora: ${status.toUpperCase()}!`,
         type: "live",
         link: `/competitions/${id}`,
         createdAt: Date.now(),
-        senderId: userData?.uid
+        senderId: userData?.uid,
       });
     } catch (e: any) {
-      setStatusMsg({ text: "Erro ao mudar status: " + e.message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao mudar status: " + e.message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 6000);
     }
   };
 
-  const availableTabs = comp?.type?.startsWith("Finais ") ? [comp.type.split(" ")[1]] : CATEGORIES;
+  let availableTabs = CATEGORIES;
+  if (comp?.type?.startsWith("Finais ")) {
+    availableTabs = [comp.type.split(" ")[1]];
+  } else if (comp?.type === "Final AA") {
+    availableTabs = ["AA", "VT", "UB", "BB", "FX"];
+  } else if (comp?.type === "Final TF") {
+    availableTabs = ["TF", "VT", "UB", "BB", "FX"];
+  }
 
   useEffect(() => {
-     if (comp?.type?.startsWith("Finais ")) {
-        setActiveTab(comp?.type?.split(" ")[1]);
-     }
+    if (comp?.type?.startsWith("Finais ")) {
+      setActiveTab(comp?.type?.split(" ")[1]);
+    } else if (comp?.type === "Final AA") {
+      setActiveTab("AA");
+    } else if (comp?.type === "Final TF") {
+      setActiveTab("TF");
+    }
   }, [comp?.type]);
 
   if (!comp) return <div className="p-8 text-slate-400">Carregando...</div>;
@@ -179,7 +330,7 @@ export default function CompetitionDetail() {
   let displayScores: any[] = [];
   if (activeTab === "AA") {
     const aaMap = new Map();
-    scores.forEach(s => {
+    scores.forEach((s) => {
       if (s.category === "AA" || s.category === "TF") return;
       if (!aaMap.has(s.gymnastId)) {
         aaMap.set(s.gymnastId, {
@@ -194,17 +345,20 @@ export default function CompetitionDetail() {
         });
       }
       const item = aaMap.get(s.gymnastId);
-      item.finalScore += (s.finalScore || 0);
-      item.dScore += (s.dScore || 0);
-      item.eScore += (s.eScore || 0);
+      item.finalScore += s.finalScore || 0;
+      item.dScore += s.dScore || 0;
+      item.eScore += s.eScore || 0;
       item.categoryCount += 1;
     });
-    displayScores = Array.from(aaMap.values()).sort((a, b) => b.finalScore - a.finalScore);
+    displayScores = Array.from(aaMap.values()).sort(
+      (a, b) => b.finalScore - a.finalScore,
+    );
   } else if (activeTab === "TF") {
     const tfMap = new Map();
-    scores.forEach(s => {
+    scores.forEach((s) => {
       if (s.category === "AA" || s.category === "TF") return;
-      const teamLabel = s.team && s.team !== "Independente" ? s.team : s.gymnastName; // Fallback so independent don't get merged
+      const teamLabel =
+        s.team && s.team !== "Independente" ? s.team : s.gymnastName; // Fallback so independent don't get merged
       if (!tfMap.has(teamLabel)) {
         tfMap.set(teamLabel, {
           id: teamLabel,
@@ -217,13 +371,17 @@ export default function CompetitionDetail() {
         });
       }
       const item = tfMap.get(teamLabel);
-      item.finalScore += (s.finalScore || 0);
-      item.dScore += (s.dScore || 0);
-      item.eScore += (s.eScore || 0);
+      item.finalScore += s.finalScore || 0;
+      item.dScore += s.dScore || 0;
+      item.eScore += s.eScore || 0;
     });
-    displayScores = Array.from(tfMap.values()).sort((a, b) => b.finalScore - a.finalScore);
+    displayScores = Array.from(tfMap.values()).sort(
+      (a, b) => b.finalScore - a.finalScore,
+    );
   } else {
-    displayScores = scores.filter(s => s.category === activeTab).sort((a, b) => b.finalScore - a.finalScore);
+    displayScores = scores
+      .filter((s) => s.category === activeTab)
+      .sort((a, b) => b.finalScore - a.finalScore);
   }
 
   if (comp?.type?.includes("Finais")) {
@@ -233,11 +391,13 @@ export default function CompetitionDetail() {
   return (
     <div className="space-y-6">
       {statusMsg && (
-        <div className={`p-4 rounded-xl text-sm font-bold border transition-all ${
-          statusMsg.type === "success" 
-            ? "bg-green-500/10 border-green-500/30 text-green-400" 
-            : "bg-red-500/10 border-red-500/30 text-red-400"
-        }`}>
+        <div
+          className={`p-4 rounded-xl text-sm font-bold border transition-all ${
+            statusMsg.type === "success"
+              ? "bg-green-500/10 border-green-500/30 text-green-400"
+              : "bg-red-500/10 border-red-500/30 text-red-400"
+          }`}
+        >
           {statusMsg.text}
         </div>
       )}
@@ -312,7 +472,7 @@ export default function CompetitionDetail() {
               Ginasta em julgamento
             </span>
           </div>
-          
+
           {/* Gymnast and Team details */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
             <div className="space-y-1">
@@ -320,16 +480,20 @@ export default function CompetitionDetail() {
                 {activeLivePerf.gymnastName} ({activeLivePerf.category})
               </span>
               <span className="text-xs text-white/90 font-medium bg-black/20 px-2.5 py-0.5 rounded-md inline-block">
-                Equipe: {activeLivePerf.team || scores.find((s) => s.gymnastId === activeLivePerf.gymnastId)?.team || "Independente"}
+                Equipe:{" "}
+                {activeLivePerf.team ||
+                  scores.find((s) => s.gymnastId === activeLivePerf.gymnastId)
+                    ?.team ||
+                  "Independente"}
               </span>
             </div>
 
             {activeLivePerf.category === "FX" && canStopMusic && (
               <button
-                 onClick={handleStopMusic}
-                 className="bg-red-700 hover:bg-red-600 border border-red-500/30 text-white font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-red-950/20 shrink-0 w-full sm:w-auto"
+                onClick={handleStopMusic}
+                className="bg-red-700 hover:bg-red-600 border border-red-500/30 text-white font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-red-950/20 shrink-0 w-full sm:w-auto"
               >
-                 <Music className="w-3.5 h-3.5" /> Parar Música
+                <Music className="w-3.5 h-3.5" /> Parar Música
               </button>
             )}
           </div>
@@ -343,7 +507,11 @@ export default function CompetitionDetail() {
               Ranking em Tempo Real
             </h2>
             <span className="bg-white/10 px-2 py-1 rounded text-[10px] font-mono mt-1 sm:mt-0">
-              {activeTab === "TF" ? "FINAL POR EQUIPES (SOMA)" : activeTab === "AA" ? "INDIVIDUAL GERAL (SOMA)" : `CATEGORIA: ${activeTab}`}
+              {activeTab === "TF"
+                ? "FINAL POR EQUIPES (SOMA)"
+                : activeTab === "AA"
+                  ? "INDIVIDUAL GERAL (SOMA)"
+                  : `CATEGORIA: ${activeTab}`}
             </span>
           </div>
         </div>
@@ -353,36 +521,48 @@ export default function CompetitionDetail() {
             <div
               key={s.id}
               onClick={() => {
-                 if (!s.isTF && !s.isAA) setSelectedScore(s);
+                if (!s.isTF && !s.isAA) setSelectedScore(s);
               }}
               className={clsx(
                 "p-4 mx-2 sm:mx-4 my-2 rounded-xl flex items-center justify-between hover:bg-white/5 transition-colors group border border-transparent active:scale-[0.98] transition-transform",
-                (!s.isTF && !s.isAA) && "cursor-pointer",
-                i === 0
-                  ? "bg-white/5 border-yellow-400/20"
-                  : "",
+                !s.isTF && !s.isAA && "cursor-pointer",
+                i === 0 ? "bg-white/5 border-yellow-400/20" : "",
               )}
             >
               <div className="flex items-center space-x-3 overflow-hidden">
                 <span className="font-mono text-sm opacity-50 w-6 flex justify-center shrink-0">
                   {comp.status === "encerrada" &&
-                    comp.type?.includes("Finais") &&
+                    (comp.type?.includes("Finais") ||
+                      (comp.type === "Final AA" && activeTab === "AA") ||
+                      (comp.type === "Final TF" && activeTab === "TF")) &&
                     i === 0 && (
-                      <span className="text-xl" title="Ouro">🥇</span>
+                      <span className="text-xl" title="Ouro">
+                        🥇
+                      </span>
                     )}
                   {comp.status === "encerrada" &&
-                    comp.type?.includes("Finais") &&
+                    (comp.type?.includes("Finais") ||
+                      (comp.type === "Final AA" && activeTab === "AA") ||
+                      (comp.type === "Final TF" && activeTab === "TF")) &&
                     i === 1 && (
-                      <span className="text-xl" title="Prata">🥈</span>
+                      <span className="text-xl" title="Prata">
+                        🥈
+                      </span>
                     )}
                   {comp.status === "encerrada" &&
-                    comp.type?.includes("Finais") &&
+                    (comp.type?.includes("Finais") ||
+                      (comp.type === "Final AA" && activeTab === "AA") ||
+                      (comp.type === "Final TF" && activeTab === "TF")) &&
                     i === 2 && (
-                      <span className="text-xl" title="Bronze">🥉</span>
+                      <span className="text-xl" title="Bronze">
+                        🥉
+                      </span>
                     )}
                   {!(
                     comp.status === "encerrada" &&
-                    comp.type?.includes("Finais") &&
+                    (comp.type?.includes("Finais") ||
+                      (comp.type === "Final AA" && activeTab === "AA") ||
+                      (comp.type === "Final TF" && activeTab === "TF")) &&
                     i < 3
                   ) && String(i + 1).padStart(2, "0")}
                 </span>
@@ -395,7 +575,7 @@ export default function CompetitionDetail() {
                   </p>
                   {s.isAA && (
                     <p className="text-[9px] text-[#009c3b] mt-1 font-bold">
-                       {s.categoryCount} APARELHOS
+                      {s.categoryCount} APARELHOS
                     </p>
                   )}
                 </div>
@@ -404,7 +584,9 @@ export default function CompetitionDetail() {
               <div className="flex items-center gap-3 sm:gap-6 shrink-0 ml-2">
                 {!s.isTF && !s.isAA && (
                   <div className="hidden sm:block text-right">
-                    <p className="text-[10px] text-slate-500 uppercase mb-0.5">D+E</p>
+                    <p className="text-[10px] text-slate-500 uppercase mb-0.5">
+                      D+E
+                    </p>
                     <p className="font-mono text-xs text-slate-400">
                       {s.dScore?.toFixed(2)} + {s.eScore?.toFixed(2)}
                     </p>
@@ -413,7 +595,9 @@ export default function CompetitionDetail() {
                 <div
                   className={clsx(
                     "px-3 py-1.5 rounded-lg border text-right transition-colors min-w-[70px]",
-                    i === 0 ? "bg-yellow-400/10 border-yellow-400/20" : "bg-black/20 border-white/5",
+                    i === 0
+                      ? "bg-yellow-400/10 border-yellow-400/20"
+                      : "bg-black/20 border-white/5",
                   )}
                 >
                   <p
@@ -472,8 +656,11 @@ function ScoreModal({
   const [isEditing, setIsEditing] = useState(false);
   const [editDScore, setEditDScore] = useState(String(score.dScore || ""));
   const [editEScore, setEditEScore] = useState(String(score.eScore || ""));
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
-  
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
+
   const [selectedVault, setSelectedVault] = useState<1 | 2>(1);
 
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -500,7 +687,10 @@ function ScoreModal({
       setIsEditing(false);
       onClose();
     } catch (err: any) {
-      setStatusMsg({ text: "Erro ao editar nota: " + err.message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao editar nota: " + err.message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 6000);
     }
   };
@@ -521,11 +711,13 @@ function ScoreModal({
         </button>
 
         {statusMsg && (
-          <div className={`p-4 mb-4 rounded-xl text-sm font-bold border transition-all ${
-            statusMsg.type === "success" 
-              ? "bg-green-500/10 border-green-500/30 text-green-400" 
-              : "bg-red-500/10 border-red-500/30 text-red-400"
-          }`}>
+          <div
+            className={`p-4 mb-4 rounded-xl text-sm font-bold border transition-all ${
+              statusMsg.type === "success"
+                ? "bg-green-500/10 border-green-500/30 text-green-400"
+                : "bg-red-500/10 border-red-500/30 text-red-400"
+            }`}
+          >
             {statusMsg.text}
           </div>
         )}
@@ -609,20 +801,26 @@ function ScoreModal({
                   </div>
                   <div className="font-mono text-sm text-white flex flex-col gap-1">
                     <div>
-                      <span className="text-slate-400 font-sans text-xs">D:</span> {score.vtDetails.vault1?.dScore?.toFixed(3)}
+                      <span className="text-slate-400 font-sans text-xs">
+                        D:
+                      </span>{" "}
+                      {score.vtDetails.vault1?.dScore?.toFixed(3)}
                     </div>
                     <div>
-                      <span className="text-slate-400 font-sans text-xs">E:</span> {score.vtDetails.vault1?.eScore?.toFixed(3)}
+                      <span className="text-slate-400 font-sans text-xs">
+                        E:
+                      </span>{" "}
+                      {score.vtDetails.vault1?.eScore?.toFixed(3)}
                     </div>
                   </div>
                 </button>
-                
+
                 <button
                   onClick={() => setSelectedVault(2)}
                   disabled={!score.vtDetails.vault2}
                   className={`text-left p-4 rounded-xl border transition-all ${
-                    !score.vtDetails.vault2 
-                      ? "opacity-50 cursor-not-allowed bg-black/20 border-white/5" 
+                    !score.vtDetails.vault2
+                      ? "opacity-50 cursor-not-allowed bg-black/20 border-white/5"
                       : selectedVault === 2
                         ? "bg-slate-800 border-indigo-500 shadow-md shadow-indigo-900/20"
                         : "bg-black/40 border-white/5 hover:bg-slate-900"
@@ -634,47 +832,61 @@ function ScoreModal({
                   {score.vtDetails.vault2 ? (
                     <div className="font-mono text-sm text-white flex flex-col gap-1">
                       <div>
-                        <span className="text-slate-400 font-sans text-xs">D:</span> {score.vtDetails.vault2.dScore?.toFixed(3)}
+                        <span className="text-slate-400 font-sans text-xs">
+                          D:
+                        </span>{" "}
+                        {score.vtDetails.vault2.dScore?.toFixed(3)}
                       </div>
                       <div>
-                        <span className="text-slate-400 font-sans text-xs">E:</span> {score.vtDetails.vault2.eScore?.toFixed(3)}
+                        <span className="text-slate-400 font-sans text-xs">
+                          E:
+                        </span>{" "}
+                        {score.vtDetails.vault2.eScore?.toFixed(3)}
                       </div>
                     </div>
                   ) : (
                     <div className="font-mono text-sm text-slate-600 italic mt-2">
-                       Pendente
+                      Pendente
                     </div>
                   )}
                 </button>
               </div>
             </div>
-            
+
             <div className="mb-6">
               <h4 className="text-xs font-black text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2">
-                Deduções Aplicadas <span className="text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">SALTO {selectedVault}</span>
+                Deduções Aplicadas{" "}
+                <span className="text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                  SALTO {selectedVault}
+                </span>
               </h4>
               {(() => {
-                 const currentVaultDetails = selectedVault === 1 ? score.vtDetails.vault1 : score.vtDetails.vault2;
-                 const deductions = currentVaultDetails?.deductions || [];
-                 return !deductions.length ? (
+                const currentVaultDetails =
+                  selectedVault === 1
+                    ? score.vtDetails.vault1
+                    : score.vtDetails.vault2;
+                const deductions = currentVaultDetails?.deductions || [];
+                return !deductions.length ? (
                   <div className="text-slate-600 text-sm font-mono bg-white/5 p-3 rounded-xl">
                     Nenhuma dedução registrada.
                   </div>
-                 ) : (
+                ) : (
                   <div className="space-y-2">
                     {deductions.map((d: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex justify-between items-center bg-black/40 border border-white/5 px-4 py-2 text-sm rounded-xl"
                       >
-                        <span className="text-slate-300 font-medium">{d.label}</span>
+                        <span className="text-slate-300 font-medium">
+                          {d.label}
+                        </span>
                         <span className="font-mono font-bold text-red-500">
                           -{d.value?.toFixed(3)}
                         </span>
                       </div>
                     ))}
                   </div>
-                 );
+                );
               })()}
             </div>
           </>
@@ -723,7 +935,9 @@ function ScoreModal({
                     key={idx}
                     className="flex justify-between items-center bg-black/40 border border-white/5 px-4 py-2 text-sm rounded-xl"
                   >
-                    <span className="text-slate-300 font-medium">{d.label}</span>
+                    <span className="text-slate-300 font-medium">
+                      {d.label}
+                    </span>
                     <span className="font-mono font-bold text-red-500">
                       -{d.value?.toFixed(3)}
                     </span>

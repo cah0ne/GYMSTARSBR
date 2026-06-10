@@ -15,7 +15,14 @@ import {
   deleteDoc,
   getDocs,
 } from "../lib/firebase";
-import { Plus, Calendar, Activity, CheckCircle2, Pencil, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  Activity,
+  CheckCircle2,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -28,10 +35,13 @@ export default function CompetitionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingCompId, setEditingCompId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
   const [newComp, setNewComp] = useState({
     name: "",
-    type: "Qualificações",
+    type: "Qualificatórias",
     date: "",
     time: "",
     status: "futura",
@@ -58,14 +68,17 @@ export default function CompetitionsPage() {
         // Edit mode
         await updateDoc(doc(db, "competitions", editingCompId), {
           ...newComp,
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
         });
         await addDoc(collection(db, "notifications"), {
           message: `Competição atualizada pelo administrador: ${newComp.name}`,
           type: "info",
           createdAt: Date.now(),
         });
-        setStatusMsg({ text: "Competição atualizada com sucesso!", type: "success" });
+        setStatusMsg({
+          text: "Competição atualizada com sucesso!",
+          type: "success",
+        });
         setTimeout(() => setStatusMsg(null), 4000);
       } else {
         // Create mode
@@ -80,23 +93,29 @@ export default function CompetitionsPage() {
           type: "live",
           link: "/competitions",
           createdAt: Date.now(),
-          senderId: userData?.uid
+          senderId: userData?.uid,
         });
-        setStatusMsg({ text: "Competição criada com sucesso!", type: "success" });
+        setStatusMsg({
+          text: "Competição criada com sucesso!",
+          type: "success",
+        });
         setTimeout(() => setStatusMsg(null), 4000);
       }
       setShowModal(false);
       setEditingCompId(null);
       setNewComp({
         name: "",
-        type: "Qualificações",
+        type: "Qualificatórias",
         date: "",
         time: "",
         status: "futura",
       });
     } catch (err) {
       console.error(err);
-      setStatusMsg({ text: "Erro ao salvar competição: " + (err as any).message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao salvar competição: " + (err as any).message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 6000);
     }
   };
@@ -105,7 +124,7 @@ export default function CompetitionsPage() {
     setEditingCompId(c.id);
     setNewComp({
       name: c.name || "",
-      type: c.type || "Qualificações",
+      type: c.type || "Qualificatórias",
       date: c.date || "",
       time: c.time || "",
       status: c.status || "futura",
@@ -121,23 +140,36 @@ export default function CompetitionsPage() {
         const uData = uDoc.data();
         if (!uData.badges) continue;
 
-        const toRemove = uData.badges.filter((b: any) => 
-          (typeof b === "object" && b.competitionId === id) || 
-          (typeof b === "string" ? b.endsWith(` - ${name}`) : b.name?.endsWith(` - ${name}`))
+        const toRemove = uData.badges.filter(
+          (b: any) =>
+            (typeof b === "object" && b.competitionId === id) ||
+            (typeof b === "string"
+              ? b.endsWith(` - ${name}`)
+              : b.name?.endsWith(` - ${name}`)),
         );
-        
-        if (toRemove.length > 0) {
-           const newBadges = uData.badges.filter((b: any) => !toRemove.includes(b));
-           const medals = { ...(uData.medals || { gold: 0, silver: 0, bronze: 0 }) };
-           
-           toRemove.forEach((b: any) => {
-             const bName = typeof b === "string" ? b : b.name;
-             if (bName.startsWith("Ouro") || bName.startsWith("🥇")) medals.gold = Math.max(0, (medals.gold || 0) - 1);
-             if (bName.startsWith("Prata") || bName.startsWith("🥈")) medals.silver = Math.max(0, (medals.silver || 0) - 1);
-             if (bName.startsWith("Bronze") || bName.startsWith("🥉")) medals.bronze = Math.max(0, (medals.bronze || 0) - 1);
-           });
 
-           await updateDoc(doc(db, "users", uDoc.id), { badges: newBadges, medals });
+        if (toRemove.length > 0) {
+          const newBadges = uData.badges.filter(
+            (b: any) => !toRemove.includes(b),
+          );
+          const medals = {
+            ...(uData.medals || { gold: 0, silver: 0, bronze: 0 }),
+          };
+
+          toRemove.forEach((b: any) => {
+            const bName = typeof b === "string" ? b : b.name;
+            if (bName.startsWith("Ouro") || bName.startsWith("🥇"))
+              medals.gold = Math.max(0, (medals.gold || 0) - 1);
+            if (bName.startsWith("Prata") || bName.startsWith("🥈"))
+              medals.silver = Math.max(0, (medals.silver || 0) - 1);
+            if (bName.startsWith("Bronze") || bName.startsWith("🥉"))
+              medals.bronze = Math.max(0, (medals.bronze || 0) - 1);
+          });
+
+          await updateDoc(doc(db, "users", uDoc.id), {
+            badges: newBadges,
+            medals,
+          });
         }
       }
 
@@ -147,12 +179,18 @@ export default function CompetitionsPage() {
         type: "warning",
         createdAt: Date.now(),
       });
-      setStatusMsg({ text: "Competição excluída com sucesso!", type: "success" });
+      setStatusMsg({
+        text: "Competição excluída com sucesso!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
       setDeleteConfirmId(null);
     } catch (err) {
       console.error(err);
-      setStatusMsg({ text: "Erro ao excluir competição: " + (err as any).message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao excluir competição: " + (err as any).message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 6000);
     }
   };
@@ -169,7 +207,9 @@ export default function CompetitionsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Competições</h1>
+          <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">
+            Competições
+          </h1>
           <p className="text-neutral-400">
             Acompanhe todos os eventos de ginástica.
           </p>
@@ -180,7 +220,7 @@ export default function CompetitionsPage() {
               setEditingCompId(null);
               setNewComp({
                 name: "",
-                type: "Qualificações",
+                type: "Qualificatórias",
                 date: "",
                 time: "",
                 status: "futura",
@@ -195,11 +235,13 @@ export default function CompetitionsPage() {
       </div>
 
       {statusMsg && (
-        <div className={`p-4 rounded-xl text-sm font-bold border transition-all ${
-          statusMsg.type === "success" 
-            ? "bg-green-500/10 border-green-500/30 text-green-400" 
-            : "bg-red-500/10 border-red-500/30 text-red-400"
-        }`}>
+        <div
+          className={`p-4 rounded-xl text-sm font-bold border transition-all ${
+            statusMsg.type === "success"
+              ? "bg-green-500/10 border-green-500/30 text-green-400"
+              : "bg-red-500/10 border-red-500/30 text-red-400"
+          }`}
+        >
           {statusMsg.text}
         </div>
       )}
@@ -227,12 +269,16 @@ export default function CompetitionsPage() {
                   {c.type}
                 </span>
               </div>
-              <h2 className="text-xl font-black italic uppercase tracking-tighter mb-2 flex-1">{c.name}</h2>
+              <h2 className="text-xl font-black italic uppercase tracking-tighter mb-2 flex-1">
+                {c.name}
+              </h2>
               <div className="flex items-center gap-2 text-sm text-neutral-400 mt-4">
                 <Calendar className="w-4 h-4" />
                 <span>
                   {c.date
-                    ? format(new Date(c.date + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
+                    ? format(new Date(c.date + "T12:00:00"), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })
                     : "Data não definida"}
                   {c.time ? ` às ${c.time}` : ""}
                 </span>
@@ -243,7 +289,9 @@ export default function CompetitionsPage() {
               <div className="absolute bottom-4 left-5 right-5 flex justify-end items-center gap-2 border-t border-slate-800/40 pt-3">
                 {deleteConfirmId === c.id ? (
                   <div className="flex gap-1.5 items-center bg-slate-950 px-2 py-1 rounded-lg border border-red-500/30">
-                    <span className="text-[10px] text-red-400 font-extrabold mr-0.5">Excluir?</span>
+                    <span className="text-[10px] text-red-400 font-extrabold mr-0.5">
+                      Excluir?
+                    </span>
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -336,7 +384,10 @@ export default function CompetitionsPage() {
                   }
                   className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-white"
                 >
-                  <option>Qualificações</option>
+                  <option>Qualificatórias</option>
+                  <option>Trials</option>
+                  <option>Final AA</option>
+                  <option>Final TF</option>
                   <option>Finais</option>
                   <option>Finais VT</option>
                   <option>Finais UB</option>
@@ -397,7 +448,7 @@ export default function CompetitionsPage() {
                     setEditingCompId(null);
                     setNewComp({
                       name: "",
-                      type: "Qualificações",
+                      type: "Qualificatórias",
                       date: "",
                       time: "",
                       status: "futura",

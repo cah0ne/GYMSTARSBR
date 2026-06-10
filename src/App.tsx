@@ -244,7 +244,7 @@ function Layout({
                      {branding?.menuIcons?.["batePapo"] ? (
                        <img src={branding.menuIcons["batePapo"]} alt="" className="object-contain -ml-0.5" style={{ width: branding.menuIconsSize || 24, height: branding.menuIconsSize || 24 }} />
                      ) : (
-                       <div className="w-5 h-5 flex items-center justify-center shrink-0" />
+                       <MessageSquare className="w-5 h-5 shrink-0 text-slate-450 group-hover:text-slate-200" />
                      )}
                      <span className="font-medium hidden lg:inline flex-1 text-sm">Bate-papo</span>
                    </div>
@@ -272,7 +272,7 @@ function Layout({
                      {branding?.menuIcons?.["arbitragem"] ? (
                        <img src={branding.menuIcons["arbitragem"]} alt="" className="object-contain -ml-0.5" style={{ width: branding.menuIconsSize || 24, height: branding.menuIconsSize || 24 }} />
                      ) : (
-                       <div className="w-5 h-5 flex items-center justify-center shrink-0" />
+                       <ShieldCheck className="w-5 h-5 shrink-0 text-slate-450 group-hover:text-slate-200" />
                      )}
                      <span className="font-medium hidden lg:inline text-sm">Arbitragem</span>
                    </div>
@@ -295,7 +295,7 @@ function Layout({
                      {branding?.menuIcons?.["admin"] ? (
                        <img src={branding.menuIcons["admin"]} alt="" className="object-contain -ml-0.5" style={{ width: branding.menuIconsSize || 24, height: branding.menuIconsSize || 24 }} />
                      ) : (
-                       <div className="w-5 h-5 flex items-center justify-center shrink-0" />
+                       <ShieldAlert className="w-5 h-5 shrink-0 text-slate-450 group-hover:text-slate-200" />
                      )}
                      <span className="font-medium hidden lg:inline text-sm">Painel Admin</span>
                    </div>
@@ -441,7 +441,7 @@ function Layout({
                            {branding?.menuIcons?.["batePapo"] ? (
                              <img src={branding.menuIcons["batePapo"]} alt="" className="object-contain -ml-0.5" style={{ width: branding.menuIconsSize || 24, height: branding.menuIconsSize || 24 }} />
                            ) : (
-                             <div className="w-5 h-5 flex items-center justify-center shrink-0" />
+                             <MessageSquare className="w-5 h-5 shrink-0 text-slate-450 group-hover:text-slate-200" />
                            )}
                            <span className="font-medium text-sm">Bate-papo</span>
                          </div>
@@ -470,7 +470,7 @@ function Layout({
                             {branding?.menuIcons?.["arbitragem"] ? (
                               <img src={branding.menuIcons["arbitragem"]} alt="" className="object-contain -ml-0.5" style={{ width: branding.menuIconsSize || 24, height: branding.menuIconsSize || 24 }} />
                             ) : (
-                              <div className="w-5 h-5 flex items-center justify-center shrink-0" />
+                              <ShieldCheck className="w-5 h-5 shrink-0 text-slate-450 group-hover:text-slate-200" />
                             )}
                             <span className="font-medium text-sm">Arbitragem</span>
                          </div>
@@ -494,7 +494,7 @@ function Layout({
                             {branding?.menuIcons?.["admin"] ? (
                               <img src={branding.menuIcons["admin"]} alt="" className="object-contain -ml-0.5" style={{ width: branding.menuIconsSize || 24, height: branding.menuIconsSize || 24 }} />
                             ) : (
-                              <div className="w-5 h-5 flex items-center justify-center shrink-0" />
+                              <ShieldAlert className="w-5 h-5 shrink-0 text-slate-450 group-hover:text-slate-200" />
                             )}
                             <span className="font-medium text-sm">Painel Administrativo</span>
                          </div>
