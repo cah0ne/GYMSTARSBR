@@ -1,0 +1,227 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Formatos MD3 Custom*/
+  --font-label-caps: "Inter", sans-serif;
+  --font-display-lg: "Inter", sans-serif;
+  --font-headline-lg-mobile: "Inter", sans-serif;
+  --font-title-md: "Inter", sans-serif;
+  --font-body-sm: "Inter", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-headline-lg: "Inter", sans-serif;
+
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 16px;
+  --text-label-caps--letter-spacing: 0.05em;
+
+  --text-display-lg: 48px;
+  --text-display-lg--line-height: 56px;
+  --text-display-lg--letter-spacing: -0.02em;
+
+  --text-headline-lg-mobile: 28px;
+  --text-headline-lg-mobile--line-height: 36px;
+
+  --text-title-md: 20px;
+  --text-title-md--line-height: 28px;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.01em;
+
+  --spacing-container-margin: 20px;
+  --spacing-gutter: 16px;
+  --spacing-xl: 32px;
+  --spacing-xs: 4px;
+  --spacing-lg: 24px;
+  --spacing-md: 16px;
+  --spacing-sm: 12px;
+  --spacing-base: 8px;
+
+  --color-secondary: #d0bcff;
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-primary-fixed: #dae2fd;
+  --color-background: #101415;
+  --color-on-error-container: #ffdad6;
+  --color-surface-container-high: #272a2c;
+  --color-on-secondary-fixed-variant: #5516be;
+  --color-surface-container-highest: #323537;
+  --color-on-primary-fixed: #131b2e;
+  --color-secondary-fixed-dim: #d0bcff;
+  --color-on-background: #e0e3e5;
+  --color-surface-dim: #101415;
+  --color-surface-container: #1d2022;
+  --color-primary: #bec6e0;
+  --color-primary-fixed-dim: #bec6e0;
+  --color-error-container: #93000a;
+  --color-on-secondary-container: #c4abff;
+  --color-inverse-surface: #e0e3e5;
+  --color-tertiary-fixed-dim: #abd600;
+  --color-tertiary: #abd600;
+  --color-surface-bright: #363a3b;
+  --color-primary-container: #0f172a;
+  --color-on-secondary: #3c0091;
+  --color-surface-container-lowest: #0b0f10;
+  --color-on-surface: #e0e3e5;
+  --color-secondary-fixed: #e9ddff;
+  --color-tertiary-container: #131a00;
+  --color-on-tertiary-fixed: #161e00;
+  --color-on-secondary-fixed: #23005c;
+  --color-on-surface-variant: #c6c6cd;
+  --color-outline: #909097;
+  --color-on-primary-container: #798098;
+  --color-secondary-container: #571bc1;
+  --color-surface-variant: #323537;
+  --color-on-primary: #283044;
+  --color-on-tertiary: #283500;
+  --color-on-tertiary-container: #6e8b00;
+  --color-on-primary-fixed-variant: #3f465c;
+  --color-outline-variant: #45464d;
+  --color-surface: #101415;
+  --color-on-tertiary-fixed-variant: #3c4d00;
+  --color-inverse-on-surface: #2d3133;
+  --color-tertiary-fixed: #c3f400;
+  --color-inverse-primary: #565e74;
+  --color-surface-tint: #bec6e0;
+  --color-surface-container-low: #191c1e;
+
+  /* Artistic Flair Colors mapped to our previous neutral and green classes */
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0d1624; /* Adjusted to fit the border contrast */
+  /* We will override the neutral colors that we didn't replace, just in case */
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0d1624;
+  --color-neutral-950: #070F1C;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #050B14;
+  color: #f1f5f9;
+}
+
+img, a, button, [role="button"], .snap-start, .no-callout {
+  -webkit-touch-callout: none !important; /* Prevents callout/menu on iOS long press */
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important; /* Prevents dragging */
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+body.overlay-mode {
+  background-color: transparent !important;
+}
+
+#root {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+@media (max-width: 767px) {
+  /* Garante que elementos lado a lado fiquem empilhados e com 100% de largura */
+  .md\:flex-row {
+    flex-direction: column !important;
+  }
+  
+  .md\:w-72, .md\:w-80, .md\:w-56 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Define fontes com tamanho mínimo de 16px para inputs e textos cruciais para melhor leitura sem zoom automático no mobile */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Adiciona classes utilitárias para toque e visualizadores mobile */
+  .mobile-touch-target {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
+/* Quill Dark Theme Overrides */
+.quill-dark .ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #334155 !important;
+  background-color: rgba(15, 23, 42, 0.5) !important;
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+.quill-dark .ql-container {
+  border: none !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+.quill-dark .ql-editor {
+  min-height: 120px;
+  color: white !important;
+  padding: 0.75rem 1rem !important;
+}
+.quill-dark .ql-editor.ql-blank::before {
+  color: #475569 !important;
+  font-style: normal !important;
+}
+.quill-dark .ql-stroke { stroke: #94a3b8 !important; }
+.quill-dark .ql-fill { fill: #94a3b8 !important; }
+.quill-dark .ql-picker { color: #94a3b8 !important; }
+.quill-dark .ql-picker-options {
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  z-index: 9999 !important;
+}
+.quill-dark .ql-picker-item:hover, .quill-dark .ql-picker-item.ql-selected {
+  color: #009c3b !important;
+}
+.quill-dark button:hover .ql-stroke, .quill-dark button:hover .ql-fill,
+.quill-dark button.ql-active .ql-stroke, .quill-dark button.ql-active .ql-fill,
+.quill-dark .ql-picker-label:hover .ql-stroke {
+  stroke: #009c3b !important;
+  color: #009c3b !important;
+}
+
+.rich-text-content {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+.rich-text-content p {
+  margin-bottom: 1em;
+}
+.rich-text-content h1, .rich-text-content h2, .rich-text-content h3 {
+  color: white;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+}
+.rich-text-content h1 { font-size: 1.5em; font-weight: bold; }
+.rich-text-content h2 { font-size: 1.25em; font-weight: bold; }
+.rich-text-content h3 { font-size: 1.1em; font-weight: bold; }
+.rich-text-content ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+.rich-text-content ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+.rich-text-content a { color: #009c3b; text-decoration: underline; }
+.rich-text-content strong, .rich-text-content b { font-weight: bold; color: white; }
+.rich-text-content em, .rich-text-content i { font-style: italic; }
+.rich-text-content u { text-decoration: underline; }
+
+

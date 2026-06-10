@@ -1,0 +1,181 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role tagging",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "tag": { "type": "string", "enum": ["Visitante", "Ginasta", "Árbitro", "Admin"] },
+        "competitionName": { "type": "string", "description": "Name displayed in rankings (for Gymnasts)" },
+        "profileColor": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "medals": {
+          "type": "object",
+          "properties": {
+            "gold": { "type": "number" },
+            "silver": { "type": "number" },
+            "bronze": { "type": "number" }
+          }
+        },
+        "badges": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "musicBase64": { "type": "string", "description": "FX music" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "username", "email", "tag", "createdAt"]
+    },
+    "Competition": {
+      "title": "Competition",
+      "description": "A gymnastics competition event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Qualificações", "Finais"] },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["futura", "ao vivo", "encerrada"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "name", "type", "date", "status", "createdAt"]
+    },
+    "Score": {
+      "title": "Score",
+      "description": "A score entry for a gymnast in a competition category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "competitionId": { "type": "string" },
+        "gymnastId": { "type": "string" },
+        "gymnastName": { "type": "string" },
+        "team": { "type": "string" },
+        "category": { "type": "string", "enum": ["TF", "AA", "VT", "UB", "BB", "FX"] },
+        "dScore": { "type": "number" },
+        "eScore": { "type": "number" },
+        "finalScore": { "type": "number" },
+        "deductions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "number" },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "refereeName": { "type": "string" },
+        "vtDetails": {
+           "type": "object",
+           "description": "Used only for finals to store both vault scores",
+           "properties": {
+             "vault1": { "type": "object" },
+             "vault2": { "type": "object" }
+           }
+        },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "competitionId", "gymnastId", "gymnastName", "category", "dScore", "eScore", "finalScore", "createdAt"]
+    },
+    "AppContent": {
+      "title": "AppContent",
+      "description": "Dynamic content for Código and Elementos",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["codigo", "elementos"] },
+        "title": { "type": "string" },
+        "text": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "link": { "type": "string" },
+        "createdAt": { "type": "number" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Global systemic notifications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "message", "type", "createdAt"]
+    },
+    "LivePerformance": {
+      "title": "LivePerformance",
+      "description": "Singleton for currently performing gymnast per competition/category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "competitionId": { "type": "string" },
+        "category": { "type": "string" },
+        "gymnastName": { "type": "string" },
+        "gymnastId": { "type": "string" },
+        "musicBase64": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
+    },
+    "HomepageSettings": {
+      "title": "HomepageSettings",
+      "description": "Admin customizable homepage texts, logo, and cards",
+      "type": "object",
+      "properties": {
+        "logoUrl": { "type": "string" },
+        "logoBase64": { "type": "string" },
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "desc": { "type": "string" },
+              "iconName": { "type": "string" },
+              "iconBase64": { "type": "string" },
+              "color": { "type": "string" },
+              "link": { "type": "string" }
+            }
+          }
+        },
+        "updatedAt": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "competitions/{competitionId}": {
+      "schema": { "$ref": "#/entities/Competition" },
+      "description": "Competitions"
+    },
+    "scores/{scoreId}": {
+      "schema": { "$ref": "#/entities/Score" },
+      "description": "Scores in competitions"
+    },
+    "appContent/{contentId}": {
+      "schema": { "$ref": "#/entities/AppContent" },
+      "description": "Codigos and elements pages"
+    },
+    "notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Global notifications"
+    },
+    "livePerformances/{liveId}": {
+      "schema": { "$ref": "#/entities/LivePerformance" },
+      "description": "Real-time indicators of who is performing where"
+    },
+    "settings/homepage": {
+      "schema": { "$ref": "#/entities/HomepageSettings" },
+      "description": "Admin configurable homepage contents"
+    }
+  }
+}

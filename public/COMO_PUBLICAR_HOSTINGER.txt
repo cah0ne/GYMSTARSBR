@@ -1,0 +1,44 @@
+======================================================================
+     COMO PUBLICAR GYMSTARS BRASIL NA HOSTINGER (PELO CELULAR)
+======================================================================
+
+Olá! Como você está configurando o site de ginástica artística diretamente pelo celular, preparamos este guia simples para facilitar o processo. 
+
+Abaixo, explicamos as duas formas de publicar seu projeto no seu domínio da Hostinger. Escolha a que preferir de acordo com o seu plano de hospedagem:
+
+
+----------------------------------------------------------------------
+MÉTODO 1: HOSPEDAGEM COMUM / ESTÁTICA (Recomendado para iniciantes)
+----------------------------------------------------------------------
+Se o seu plano da Hostinger for uma Hospedagem Compartilhada simples (Single, Premium ou Business):
+
+1. Baixe o arquivo 'GYMSTARS_BRASIL.zip' (ou 'dist.zip') no seu celular.
+2. Acesse o Painel da Hostinger (hPanel) no navegador do seu celular:
+   👉 http://hpanel.hostinger.com
+3. Vá em "Sites" e selecione o seu domínio (Ex: seu-dominio.com).
+4. No menu lateral, procure por "Gerenciador de Arquivos" (File Manager) e abra a pasta 'public_html'.
+5. Se houver algum arquivo padrão da Hostinger lá (como 'default.html'), apague-o.
+6. Clique no botão de enviar arquivo (ícone de seta para cima) e envie o arquivo 'GYMSTARS_BRASIL.zip'.
+7. Após o upload, toque e segure no arquivo 'GYMSTARS_BRASIL.zip' e selecione a opção "Extrair" (Extract).
+8. Extraia diretamente para a raiz da pasta 'public_html'.
+9. Pronto! O visual e todas as telas do seu site estarão online instantaneamente!
+
+
+----------------------------------------------------------------------
+MÉTODO 2: HOSPEDAGEM NODE.JS / VPS (Para rodar o Servidor Completo)
+----------------------------------------------------------------------
+Se o seu plano da Hostinger suporta Node.js de forma ativa e você deseja hospedar também as rotas do back-end (/api):
+
+1. Acesse o Gerenciador de Arquivos no hPanel.
+2. Suba o código fonte ou a pasta 'dist/server.cjs' extraída.
+3. Configure o comando de início do Node.js da Hostinger para:
+   node server.cjs (ou use a diretiva 'npm start').
+4. Não se esqueça de adicionar as variáveis de ambiente necessárias (como as credenciais do seu banco de dados Turso) na seção "Variáveis de Ambiente / Environment Variables" do painel Node.js da Hostinger se você usar o sistema de sons ao vivo via Lua/Roblox.
+
+======================================================================
+DICA PARA INTEGRAÇÕES:
+======================================================================
+- Banco de dados Firestore / Firebase: Já está totalmente configurado de forma resiliente do lado do cliente (React)! Então as contas, equipes e emblemas criados pelo painel administrativo funcionarão perfeitamente mesmo no Método 1 (Hospedagem Estática comum)!
+- Som de Fundo / Roblox: Se você usa o recurso de som no jogo, forneça a URL HTTPS gerada pelo seu domínio.
+
+Parabéns pelo novo domínio e pelo excelente projeto GymStars Brasil!
