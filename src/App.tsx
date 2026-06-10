@@ -31,7 +31,6 @@ import RefereePage from "./pages/RefereePage";
 import AdminPage from "./pages/AdminPage";
 import ChatPage from "./pages/ChatPage";
 import TestPage from "./pages/TestPage";
-import CoursesPage from "./pages/CoursesPage";
 import NotificationsTicker from "./components/NotificationsTicker";
 import GlobalAudioListener from "./components/GlobalAudioListener";
 import NotificationCenter from "./components/NotificationCenter";
@@ -136,14 +135,13 @@ function Layout({
     { id: "inicio", path: "/", icon: Home, label: "Início" },
     { id: "quemSomos", path: "/quem-somos", icon: Sparkles, label: "Quem Somos" },
     { id: "competicoes", path: "/competitions", icon: Trophy, label: "Competições" },
-    { id: "cursos", path: "/cursos", icon: GraduationCap, label: "Cursos" },
   ];
 
   const technicalNavItems = [
     { id: "codigo", path: "/code", icon: BookOpen, label: "Código" },
     { id: "elementos", path: "/elements", icon: Shapes, label: "Elementos" },
     { id: "ginastas", path: "/gymnasts", icon: Users, label: "Ginastas" },
-    { id: "teste", path: "/teste", icon: Database, label: "Teste Banco" },
+    ...(userData?.tag === "Admin" ? [{ id: "teste", path: "/teste", icon: Database, label: "Teste Banco" }] : []),
   ];
 
   return (
@@ -615,7 +613,6 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/quem-somos" element={<AboutPage />} />
           <Route path="/competitions" element={<CompetitionsPage />} />
-          <Route path="/cursos" element={<CoursesPage />} />
           <Route path="/competitions/:id" element={<CompetitionDetail />} />
           <Route path="/gymnasts" element={<GymnastsPage />} />
           <Route path="/gymnasts/:id" element={<GymnastProfile />} />
@@ -626,7 +623,7 @@ export default function App() {
           <Route path="/referee" element={<RefereePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/chat" element={<ChatPage />} />
-          <Route path="/teste" element={<TestPage />} />
+          <Route path="/teste" element={userData?.tag === "Admin" ? <TestPage /> : <HomePage />} />
         </Route>
       </Routes>
     </HashRouter>
