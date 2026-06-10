@@ -30,6 +30,7 @@ import ProfilePage from "./pages/ProfilePage";
 import RefereePage from "./pages/RefereePage";
 import AdminPage from "./pages/AdminPage";
 import ChatPage from "./pages/ChatPage";
+import CoursesPage from "./pages/CoursesPage";
 import NotificationsTicker from "./components/NotificationsTicker";
 import GlobalAudioListener from "./components/GlobalAudioListener";
 import NotificationCenter from "./components/NotificationCenter";
@@ -134,6 +135,7 @@ function Layout({
     { id: "inicio", path: "/", icon: Home, label: "Início" },
     { id: "quemSomos", path: "/quem-somos", icon: Sparkles, label: "Quem Somos" },
     { id: "competicoes", path: "/competitions", icon: Trophy, label: "Competições" },
+    { id: "cursos", path: "/cursos", icon: GraduationCap, label: "Cursos" },
   ];
 
   const technicalNavItems = [
@@ -621,6 +623,7 @@ export default function App() {
           <Route path="/referee" element={<RefereePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/cursos" element={<CoursesPage />} />
         </Route>
       </Routes>
     </HashRouter>

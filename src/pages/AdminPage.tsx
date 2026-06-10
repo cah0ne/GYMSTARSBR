@@ -33,6 +33,7 @@ import {
   FileImage,
   Trophy,
   BookOpen,
+  GraduationCap,
   Shapes,
   Users,
   Star,
@@ -72,6 +73,7 @@ export default function AdminPage() {
     { id: "accounts", label: "Contas", icon: UserCog, desc: "Cargos, nomes e senhas" },
     { id: "teams", label: "Equipes", icon: Shield, desc: "Criar e organizar equipes" },
     { id: "badges", label: "Emblemas", icon: Award, desc: "Atribuir conquistas" },
+    { id: "courses", label: "Cursos", icon: GraduationCap, desc: "Gerenciar os cursos do site" },
     { id: "branding", label: "Personalização", icon: LayoutDashboard, desc: "Home, Logos e Quem Somos" },
     { id: "sound", label: "Sons", icon: Volume2, desc: "SFX Global do Sistema" },
   ];
@@ -278,6 +280,8 @@ export default function AdminPage() {
                  {activeTab === 'teams' && <TeamsManager teams={teams} />}
 
                  {activeTab === 'badges' && <BadgesManager users={users} />}
+
+                 {activeTab === 'courses' && <CoursesManager />}
 
                  {activeTab === 'branding' && (
                     <div className="space-y-8">
@@ -3537,6 +3541,331 @@ function AboutUsManager() {
                       title="Excluir"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoursesManager() {
+  const [courses, setCourses] = useState<any[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [coverImage, setCoverImage] = useState("");
+  const [status, setStatus] = useState<"Rascunho" | "Publicado">("Rascunho");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, "appContent"),
+      where("type", "==", "course"),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setCourses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    }, (err) => {
+      console.error("Erro no CoursesManager:", err);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setCoverImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !description) return;
+    setIsSaving(true);
+
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, "appContent", editingId), {
+          title,
+          description,
+          coverImage,
+          status,
+          updatedAt: Date.now()
+        });
+      } else {
+        await addDoc(collection(db, "appContent"), {
+          type: "course",
+          title,
+          description,
+          coverImage,
+          status,
+          createdAt: Date.now()
+        });
+      }
+
+      // Reset
+      setTitle("");
+      setDescription("");
+      setCoverImage("");
+      setStatus("Rascunho");
+      setEditingId(null);
+    } catch (err) {
+      console.error("Erro ao salvar curso:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEditSelect = (course: any) => {
+    setEditingId(course.id);
+    setTitle(course.title || "");
+    setDescription(course.description || "");
+    setCoverImage(course.coverImage || "");
+    setStatus(course.status || "Rascunho");
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Deseja realmente deletar este curso? Isso é irreversível.")) return;
+    try {
+      await deleteDoc(doc(db, "appContent", id));
+    } catch (err) {
+      console.error("Erro ao deletar:", err);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setCoverImage("");
+    setStatus("Rascunho");
+  };
+
+  return (
+    <div className="bg-[#0A1221] border border-slate-800 p-6 sm:p-8 rounded-[2.5rem] space-y-8 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#009c3b]/5 rounded-full blur-3xl pointer-events-none" />
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-[#009c3b]/10 p-3 rounded-2xl">
+            <GraduationCap className="w-8 h-8 text-[#009c3b]" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">Gerenciar Cursos</h2>
+            <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-0.5">Criar, Editar e Organizar Aulas & Certificados</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+        {/* Form Column */}
+        <div className="bg-black/35 border border-slate-800/80 p-6 rounded-3xl space-y-5">
+          <h3 className="text-sm font-black text-white uppercase tracking-wider italic flex items-center gap-2">
+            <Plus className="w-4 h-4 text-[#009c3b]" />
+            {editingId ? "Editar Curso" : "Adicionar Novo Curso"}
+          </h3>
+
+          <form onSubmit={handleSave} className="space-y-4 font-sans">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Título do Curso
+              </label>
+              <input
+                type="text"
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Formação Oficial de Árbitros 2026"
+                className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Descrição do Curso
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descreva detalhadamente o conteúdo programático, as datas das aulas, carga horária e quem pode se inscrever..."
+                className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Status de Publicação
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as any)}
+                  className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all"
+                >
+                  <option value="Rascunho" className="bg-[#0A1221]">📂 Rascunho</option>
+                  <option value="Publicado" className="bg-[#0A1221]">🚀 Publicado</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  Imagem de Capa (URL)
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={coverImage.startsWith("data:") ? "" : coverImage}
+                    onChange={(e) => setCoverImage(e.target.value)}
+                    placeholder="https://exemplo.com/capa.jpg"
+                    className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all pr-12"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600">
+                    <Link2 className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Drag & Drop Upload field */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Ou carregue do dispositivo (Upload)
+              </label>
+              <div className="border border-dashed border-slate-800 hover:border-[#009c3b]/50 rounded-2xl p-4 transition-all duration-300 relative text-center bg-black/10 group">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <div className="bg-slate-900 group-hover:bg-[#009c3b]/10 p-2.5 rounded-xl transition-colors">
+                    <Upload className="w-5 h-5 text-slate-500 group-hover:text-[#009c3b]" />
+                  </div>
+                  <span className="text-[11px] font-medium text-slate-500 group-hover:text-slate-400 transition-colors">
+                    Escolha um arquivo JPG/PNG de capa
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {coverImage && (
+              <div className="relative group rounded-2xl overflow-hidden aspect-[16/9] border border-slate-800 bg-black mt-2">
+                <img
+                  src={coverImage}
+                  alt="Pré-visualização"
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCoverImage("")}
+                  className="absolute top-3 right-3 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full transition shadow-md"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-800 hover:border-slate-700 font-bold uppercase tracking-wider py-4 rounded-2xl text-[11px] transition active:scale-95"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="flex-1 bg-[#009c3b] hover:bg-[#008031] text-white font-black uppercase tracking-widest py-4 rounded-2xl text-[11px] transition shadow-lg shadow-[#009c3b]/10 disabled:opacity-50 active:scale-95"
+              >
+                {isSaving ? "Salvando..." : editingId ? "Salvar Alterações" : "Cadastrar Curso"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* List Column */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-black text-white uppercase tracking-wider italic flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-indigo-400" />
+            Cursos Cadastrados ({courses.length})
+          </h3>
+
+          {loading ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-3 bg-black/15 border border-slate-850 rounded-3xl">
+              <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+              <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Carregando lista...</span>
+            </div>
+          ) : courses.length === 0 ? (
+            <div className="py-16 text-center bg-black/15 border border-slate-850 rounded-3xl font-sans">
+              <BookOpen className="w-8 h-8 text-slate-800 mx-auto mb-3" />
+              <p className="text-xs text-slate-500 font-medium">Nenhum curso cadastrado ainda.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[550px] overflow-y-auto pr-2 custom-scrollbar">
+              {courses.map((course) => (
+                <div
+                  key={course.id}
+                  className="bg-black/25 hover:bg-black/40 p-4 rounded-2xl border border-slate-850 flex items-center justify-between gap-4 transition-all group/item"
+                >
+                  <div className="flex items-center gap-3.5 overflow-hidden">
+                    {course.coverImage ? (
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-black shrink-0 border border-slate-800">
+                        <img src={course.coverImage} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 border border-slate-800">
+                        <GraduationCap className="w-5 h-5 text-[#009c3b]/60" />
+                      </div>
+                    )}
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-xs font-black text-white uppercase tracking-tight truncate line-clamp-1 group-hover/item:text-[#009c3b] transition-colors">{course.title}</h4>
+                        <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                          course.status === "Publicado" 
+                            ? "bg-[#009c3b]/10 border border-[#009c3b]/20 text-[#009c3b]" 
+                            : "bg-amber-500/10 border border-amber-500/20 text-amber-500"
+                        }`}>
+                          {course.status}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 line-clamp-2">
+                        {course.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleEditSelect(course)}
+                      className="p-2 hover:bg-slate-800/80 text-slate-400 hover:text-white rounded-xl transition"
+                      title="Editar Curso"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(course.id)}
+                      className="p-2 hover:bg-red-950/20 text-slate-400 hover:text-red-400 rounded-xl transition"
+                      title="Excluir Curso"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
