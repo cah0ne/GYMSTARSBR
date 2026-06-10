@@ -30,7 +30,6 @@ import ProfilePage from "./pages/ProfilePage";
 import RefereePage from "./pages/RefereePage";
 import AdminPage from "./pages/AdminPage";
 import ChatPage from "./pages/ChatPage";
-import TestPage from "./pages/TestPage";
 import NotificationsTicker from "./components/NotificationsTicker";
 import GlobalAudioListener from "./components/GlobalAudioListener";
 import NotificationCenter from "./components/NotificationCenter";
@@ -141,7 +140,6 @@ function Layout({
     { id: "codigo", path: "/code", icon: BookOpen, label: "Código" },
     { id: "elementos", path: "/elements", icon: Shapes, label: "Elementos" },
     { id: "ginastas", path: "/gymnasts", icon: Users, label: "Ginastas" },
-    ...(userData?.tag === "Admin" ? [{ id: "teste", path: "/teste", icon: Database, label: "Teste Banco" }] : []),
   ];
 
   return (
@@ -623,7 +621,6 @@ export default function App() {
           <Route path="/referee" element={<RefereePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/chat" element={<ChatPage />} />
-          <Route path="/teste" element={userData?.tag === "Admin" ? <TestPage /> : <HomePage />} />
         </Route>
       </Routes>
     </HashRouter>
