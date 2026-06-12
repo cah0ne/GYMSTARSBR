@@ -173,21 +173,32 @@ export default function CompetitionDetail() {
           msg =
             "Competição encerrada e medalhas distribuídas para os 3 melhores do Final AA!";
         } else if (comp?.type === "Final TF") {
-          const byTeam: Record<
-            string,
-            { team: string; total: number }
-          > = {};
+          const byTeamCat: Record<string, Record<string, number[]>> = {};
           scores.forEach((s) => {
             const tName = s.team;
-            if (tName && tName.toLowerCase() !== "independente") {
-              if (!byTeam[tName]) {
-                byTeam[tName] = {
-                  team: tName,
-                  total: 0,
-                };
-              }
-              byTeam[tName].total += s.finalScore;
+            if (
+              tName &&
+              tName.toLowerCase() !== "independente" &&
+              s.category !== "AA" &&
+              s.category !== "TF"
+            ) {
+              if (!byTeamCat[tName]) byTeamCat[tName] = {};
+              if (!byTeamCat[tName][s.category])
+                byTeamCat[tName][s.category] = [];
+              byTeamCat[tName][s.category].push(s.finalScore || 0);
             }
+          });
+
+          const byTeam: Record<string, { team: string; total: number }> = {};
+          Object.keys(byTeamCat).forEach((tName) => {
+            let total = 0;
+            Object.keys(byTeamCat[tName]).forEach((cat) => {
+              const catScores = byTeamCat[tName][cat]
+                .sort((a, b) => b - a)
+                .slice(0, 3);
+              total += catScores.reduce((acc, val) => acc + val, 0);
+            });
+            byTeam[tName] = { team: tName, total };
           });
 
           const sorted = Object.values(byTeam).sort(
@@ -197,7 +208,10 @@ export default function CompetitionDetail() {
 
           if (top3.length > 0) {
             const usersSnap = await getDocs(collection(db, "users"));
-            const allUsers = usersSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+            const allUsers = usersSnap.docs.map((d) => ({
+              id: d.id,
+              ...(d.data() as any),
+            }));
 
             for (let i = 0; i < top3.length; i++) {
               const badgeColor = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
@@ -208,7 +222,9 @@ export default function CompetitionDetail() {
                 competitionId: id,
               };
 
-              const teamMembers = allUsers.filter((u) => u.team === top3[i].team);
+              const teamMembers = allUsers.filter(
+                (u) => u.team === top3[i].team,
+              );
 
               for (const member of teamMembers) {
                 const userRef = doc(db, "users", member.id);
@@ -354,11 +370,14 @@ export default function CompetitionDetail() {
       (a, b) => b.finalScore - a.finalScore,
     );
   } else if (activeTab === "TF") {
+    const tfCatScores = new Map();
     const tfMap = new Map();
+
     scores.forEach((s) => {
       if (s.category === "AA" || s.category === "TF") return;
       const teamLabel =
         s.team && s.team !== "Independente" ? s.team : s.gymnastName; // Fallback so independent don't get merged
+
       if (!tfMap.has(teamLabel)) {
         tfMap.set(teamLabel, {
           id: teamLabel,
@@ -369,12 +388,36 @@ export default function CompetitionDetail() {
           eScore: 0,
           isTF: true,
         });
+        tfCatScores.set(teamLabel, {});
       }
-      const item = tfMap.get(teamLabel);
-      item.finalScore += s.finalScore || 0;
-      item.dScore += s.dScore || 0;
-      item.eScore += s.eScore || 0;
+
+      const teamCats = tfCatScores.get(teamLabel);
+      if (!teamCats[s.category]) {
+        teamCats[s.category] = [];
+      }
+      teamCats[s.category].push({
+        finalScore: s.finalScore || 0,
+        dScore: s.dScore || 0,
+        eScore: s.eScore || 0,
+      });
     });
+
+    Array.from(tfMap.keys()).forEach((teamLabel) => {
+      const item = tfMap.get(teamLabel);
+      const teamCats = tfCatScores.get(teamLabel);
+
+      Object.keys(teamCats).forEach((cat) => {
+        const catScores = teamCats[cat]
+          .sort((a: any, b: any) => b.finalScore - a.finalScore)
+          .slice(0, 3);
+        catScores.forEach((cs: any) => {
+          item.finalScore += cs.finalScore;
+          item.dScore += cs.dScore;
+          item.eScore += cs.eScore;
+        });
+      });
+    });
+
     displayScores = Array.from(tfMap.values()).sort(
       (a, b) => b.finalScore - a.finalScore,
     );
