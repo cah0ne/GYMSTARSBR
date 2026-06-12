@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
 import { UserData } from "../App";
 import {
@@ -16,9 +16,11 @@ import {
   deleteDoc,
   setDoc,
 } from "../lib/firebase";
-import { Activity, ShieldAlert, XCircle, Music } from "lucide-react";
+import { Activity, ShieldAlert, XCircle, Music, Download } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import clsx from "clsx";
+import * as htmlToImage from "html-to-image";
+import download from "downloadjs";
 
 const CATEGORIES = ["TF", "AA", "VT", "UB", "BB", "FX"];
 
@@ -39,6 +41,29 @@ export default function CompetitionDetail() {
     text: string;
     type: "success" | "error";
   } | null>(null);
+
+  const [downloadingImg, setDownloadingImg] = useState<"9:16" | "3:4" | null>(
+    null,
+  );
+  const downloadRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = async (ratio: "9:16" | "3:4") => {
+    setDownloadingImg(ratio);
+    setTimeout(async () => {
+      if (downloadRef.current) {
+        try {
+          const dataUrl = await htmlToImage.toJpeg(downloadRef.current, {
+            quality: 0.9,
+            pixelRatio: 2, // better quality
+          });
+          download(dataUrl, `ranking-${comp?.name}-${activeTab}.jpg`);
+        } catch (e) {
+          console.error("error download", e);
+        }
+        setDownloadingImg(null);
+      }
+    }, 1500); // Wait for fonts and layout to settle
+  };
 
   const handleStopMusic = async () => {
     try {
@@ -559,6 +584,34 @@ export default function CompetitionDetail() {
                   : `CATEGORIA: ${activeTab}`}
             </span>
           </div>
+          {isAdmin && (
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => handleDownload("9:16")}
+                disabled={!!downloadingImg}
+                className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/50 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
+              >
+                {downloadingImg === "9:16" ? (
+                  <Activity className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3" />
+                )}{" "}
+                9:16
+              </button>
+              <button
+                onClick={() => handleDownload("3:4")}
+                disabled={!!downloadingImg}
+                className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/50 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
+              >
+                {downloadingImg === "3:4" ? (
+                  <Activity className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Download className="w-3 h-3" />
+                )}{" "}
+                3:4
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto py-2">
@@ -675,6 +728,148 @@ export default function CompetitionDetail() {
       {comp?.type === "Qualificações" && scores.length > 8 && (
         <div className="text-sm font-medium text-slate-500 text-center">
           Apenas os 8 melhores avançam para as Finais.
+        </div>
+      )}
+
+      {/* Hidden container for image export */}
+      {downloadingImg && (
+        <div
+          style={{ position: "fixed", top: "-9999px", left: "-9999px" }}
+          aria-hidden="true"
+        >
+          <div
+            ref={downloadRef}
+            className="bg-[#070F1C] flex flex-col items-center justify-start p-16"
+            style={{
+              width: "1080px",
+              height: downloadingImg === "9:16" ? "1920px" : "1440px",
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            {/* Header */}
+            <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-10 mb-8 relative overflow-hidden flex flex-col items-center shadow-2xl">
+              <div className="text-2xl font-mono bg-white/10 px-4 py-2 rounded-lg mb-6 uppercase font-bold text-slate-300 tracking-wider">
+                {comp.type}
+              </div>
+              <h1 className="text-6xl font-black italic uppercase tracking-tighter text-white leading-tight text-center">
+                {comp.name}
+              </h1>
+              <div className="mt-8 bg-indigo-500/20 text-indigo-400 px-6 py-3 rounded-xl border border-indigo-500/50 text-3xl font-black uppercase tracking-widest">
+                {activeTab === "TF"
+                  ? "FINAL POR EQUIPES"
+                  : activeTab === "AA"
+                    ? "INDIVIDUAL GERAL"
+                    : `CATEGORIA: ${activeTab}`}
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="w-full flex-1 flex flex-col justify-start gap-6">
+              {displayScores.slice(0, 8).map((s, i) => (
+                <div
+                  key={s.id}
+                  className={clsx(
+                    "p-8 rounded-3xl flex items-center justify-between border shadow-xl bg-slate-900 border-slate-800",
+                    i === 0 ? "bg-white/5 border-yellow-400/40" : "",
+                    i === 1 ? "bg-white/5 border-slate-400/40" : "",
+                    i === 2 ? "bg-white/5 border-orange-400/40" : "",
+                  )}
+                >
+                  <div className="flex items-center space-x-8">
+                    <span className="font-mono text-4xl opacity-50 w-16 flex justify-center shrink-0">
+                      {comp.status === "encerrada" &&
+                        (comp.type?.includes("Finais") ||
+                          (comp.type === "Final AA" && activeTab === "AA") ||
+                          (comp.type === "Final TF" && activeTab === "TF")) &&
+                        i === 0 && (
+                          <span className="text-5xl" title="Ouro">
+                            🥇
+                          </span>
+                        )}
+                      {comp.status === "encerrada" &&
+                        (comp.type?.includes("Finais") ||
+                          (comp.type === "Final AA" && activeTab === "AA") ||
+                          (comp.type === "Final TF" && activeTab === "TF")) &&
+                        i === 1 && (
+                          <span className="text-5xl" title="Prata">
+                            🥈
+                          </span>
+                        )}
+                      {comp.status === "encerrada" &&
+                        (comp.type?.includes("Finais") ||
+                          (comp.type === "Final AA" && activeTab === "AA") ||
+                          (comp.type === "Final TF" && activeTab === "TF")) &&
+                        i === 2 && (
+                          <span className="text-5xl" title="Bronze">
+                            🥉
+                          </span>
+                        )}
+                      {!(
+                        comp.status === "encerrada" &&
+                        (comp.type?.includes("Finais") ||
+                          (comp.type === "Final AA" && activeTab === "AA") ||
+                          (comp.type === "Final TF" && activeTab === "TF")) &&
+                        i < 3
+                      ) && String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <p className="font-black text-4xl leading-tight text-white uppercase truncate max-w-[500px]">
+                        {s.gymnastName}
+                      </p>
+                      <p className="text-2xl text-slate-500 mt-2 truncate uppercase tracking-widest font-bold">
+                        {s.team || "Independente"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-8 shrink-0 ml-4">
+                    {!s.isTF && !s.isAA && (
+                      <div className="text-right mr-4">
+                        <p className="text-xl text-slate-500 uppercase mb-1 font-bold">
+                          D+E
+                        </p>
+                        <p className="font-mono text-2xl text-slate-400">
+                          {s.dScore?.toFixed(2)} + {s.eScore?.toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                    <div
+                      className={clsx(
+                        "px-8 py-4 rounded-2xl border text-right",
+                        i === 0
+                          ? "bg-yellow-400/10 border-yellow-400/30"
+                          : "bg-black/40 border-white/10",
+                      )}
+                    >
+                      <p
+                        className={clsx(
+                          "text-xl uppercase font-black tracking-tighter mb-1",
+                          i === 0 ? "text-yellow-500" : "text-slate-500",
+                        )}
+                      >
+                        Total
+                      </p>
+                      <p
+                        className={clsx(
+                          "text-5xl font-mono font-black",
+                          i === 0 ? "text-yellow-400" : "text-white",
+                        )}
+                      >
+                        {s.finalScore?.toFixed(3)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-8 text-center opacity-40">
+              <p className="text-2xl font-bold uppercase tracking-widest text-white">
+                Powered by GymStars
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
