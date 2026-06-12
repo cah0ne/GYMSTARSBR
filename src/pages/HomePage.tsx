@@ -286,7 +286,7 @@ export default function HomePage() {
         return {
           id: d.id,
           displayName: data.displayName,
-          competitionName: data.competitionName,
+          competitionName: data.competitionName || data.competitionname,
           username: data.username,
           photoURL: data.photoURL,
           team: data.team,
@@ -815,6 +815,7 @@ export default function HomePage() {
                       className={`text-sm sm:text-base font-black truncate leading-tight ${gymnast.rank === 1 ? "text-yellow-400" : "text-white"}`}
                     >
                       {gymnast.competitionName ||
+                        gymnast.competitionname ||
                         gymnast.displayName ||
                         gymnast.username}
                     </p>

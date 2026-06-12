@@ -147,6 +147,7 @@ export default function GymnastProfile() {
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-white flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
               {gymnast.competitionName ||
+                gymnast.competitionname ||
                 gymnast.displayName ||
                 gymnast.username}
               {gymnast.verified && (

@@ -13,8 +13,8 @@ export default function GymnastsPage() {
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       data.sort((a, b) =>
-        (a.competitionName || a.displayName || a.username).localeCompare(
-          b.competitionName || b.displayName || b.username,
+        (a.competitionName || a.competitionname || a.displayName || a.username).localeCompare(
+          b.competitionName || b.competitionname || b.displayName || b.username,
         ),
       );
       setGymnasts(data);
@@ -23,7 +23,7 @@ export default function GymnastsPage() {
   }, []);
 
   const filtered = gymnasts.filter((g) =>
-    (g.competitionName || g.displayName || g.username)
+    (g.competitionName || g.competitionname || g.displayName || g.username)
       ?.toLowerCase?.()
       ?.includes?.(search.toLowerCase()),
   );
@@ -77,7 +77,7 @@ export default function GymnastsPage() {
                 )}
               </div>
               <h2 className="font-bold text-white group-hover:text-green-400 transition-colors truncate">
-                {g.competitionName || g.displayName || g.username}
+                {g.competitionName || g.competitionname || g.displayName || g.username}
               </h2>
               <div className="flex items-center justify-center gap-1 mt-2 text-sm text-yellow-500">
                 <Medal className="w-4 h-4" />

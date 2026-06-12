@@ -135,13 +135,14 @@ export default function RankingPage() {
                     {g.photoURL ? (
                       <img
                         src={g.photoURL || undefined}
-                        alt={g.competitionName || g.displayName || g.username}
+                        alt={g.competitionName || g.competitionname || g.displayName || g.username}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <span className="font-black text-2xl italic text-slate-500">
                         {(
                           g.competitionName ||
+                          g.competitionname ||
                           g.displayName ||
                           g.username ||
                           "?"
@@ -154,7 +155,7 @@ export default function RankingPage() {
                     <h3
                       className={`text-lg sm:text-xl font-black truncate leading-tight ${g.rank === 1 ? "text-yellow-400" : "text-white"}`}
                     >
-                      {g.competitionName || g.displayName || g.username}
+                      {g.competitionName || g.competitionname || g.displayName || g.username}
                     </h3>
                     <p className="text-xs text-slate-500 uppercase tracking-widest truncate mt-1">
                       {g.team || "Independente"}
