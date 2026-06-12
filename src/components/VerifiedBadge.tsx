@@ -1,10 +1,14 @@
 import React from "react";
 
-export default function VerifiedBadge({ className = "w-4 h-4 text-blue-500 inline-block align-middle ml-1 shrink-0" }: { className?: string }) {
+export default function VerifiedBadge({
+  className = "w-4 h-4 text-blue-500 inline-block align-middle ml-1 shrink-0",
+}: {
+  className?: string;
+}) {
   return (
-    <svg 
-      className={className} 
-      viewBox="0 0 24 24" 
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
       fill="currentColor"
       title="Perfil Verificado"
     >

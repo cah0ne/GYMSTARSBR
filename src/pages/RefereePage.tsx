@@ -13,10 +13,23 @@ import {
   addDoc,
   deleteDoc,
   getDoc,
-  updateDoc
+  updateDoc,
 } from "../lib/firebase";
-import { unlockGlobalAudio, processAudioCommand } from "../components/GlobalAudioListener";
-import { Play, Square, Save, Activity, ShieldAlert, ChevronDown, Check, Search, User } from "lucide-react";
+import {
+  unlockGlobalAudio,
+  processAudioCommand,
+} from "../components/GlobalAudioListener";
+import {
+  Play,
+  Square,
+  Save,
+  Activity,
+  ShieldAlert,
+  ChevronDown,
+  Check,
+  Search,
+  User,
+} from "lucide-react";
 import clsx from "clsx";
 
 const CATEGORIES = ["VT", "UB", "BB", "FX"];
@@ -52,7 +65,10 @@ export default function RefereePage() {
       if (compRef.current && !compRef.current.contains(event.target as Node)) {
         setIsCompOpen(false);
       }
-      if (gymnastRef.current && !gymnastRef.current.contains(event.target as Node)) {
+      if (
+        gymnastRef.current &&
+        !gymnastRef.current.contains(event.target as Node)
+      ) {
         setIsGymnastOpen(false);
       }
     }
@@ -63,27 +79,36 @@ export default function RefereePage() {
   }, []);
 
   const filteredCompetitions = useMemo(() => {
-    return competitions.filter((c) =>
-      (c.name || "").toLowerCase().includes(compSearch.toLowerCase()) ||
-      (c.type || "").toLowerCase().includes(compSearch.toLowerCase())
+    return competitions.filter(
+      (c) =>
+        (c.name || "").toLowerCase().includes(compSearch.toLowerCase()) ||
+        (c.type || "").toLowerCase().includes(compSearch.toLowerCase()),
     );
   }, [competitions, compSearch]);
 
   const filteredGymnasts = useMemo(() => {
-    return gymnasts.filter((g) =>
-      (g.competitionName || g.username || "").toLowerCase().includes(gymnastSearch.toLowerCase()) ||
-      (g.club || "").toLowerCase().includes(gymnastSearch.toLowerCase())
+    return gymnasts.filter(
+      (g) =>
+        (g.competitionName || g.username || "")
+          .toLowerCase()
+          .includes(gymnastSearch.toLowerCase()) ||
+        (g.club || "").toLowerCase().includes(gymnastSearch.toLowerCase()),
     );
   }, [gymnasts, gymnastSearch]);
 
   const [isLive, setIsLive] = useState(false);
   const [dScore, setDScore] = useState<string>("");
-  const [globalSfx, setGlobalSfx] = useState("https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3");
+  const [globalSfx, setGlobalSfx] = useState(
+    "https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c1539c.mp3",
+  );
   const [deductions, setDeductions] = useState<
     { value: number; label: string }[]
   >([]);
   const [customDeduction, setCustomDeduction] = useState("");
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
   const [vault1DocId, setVault1DocId] = useState<string | null>(null);
 
   // VT specific
@@ -129,12 +154,19 @@ export default function RefereePage() {
   const currentGymnast = gymnasts.find((g) => g.id === selectedGymnastId);
   const comp = competitions.find((c) => c.id === selectedCompId);
 
-  const notifyScoreInChat = async (gymnastName: string, rawScore: number, category: string, suffix = "", gymnastPhotoURL?: string) => {
+  const notifyScoreInChat = async (
+    gymnastName: string,
+    rawScore: number,
+    category: string,
+    suffix = "",
+    gymnastPhotoURL?: string,
+  ) => {
     try {
       const roomsSnap = await getDocs(collection(db, "chat_rooms"));
-      const formattedScore = typeof rawScore === "number" ? rawScore.toFixed(3) : rawScore;
+      const formattedScore =
+        typeof rawScore === "number" ? rawScore.toFixed(3) : rawScore;
       const text = `📊 **RESULTADO EM TEMPO REAL!${suffix ? ` (${suffix})` : ""}**\n\n🤸‍♂️ **Ginasta:** ${gymnastName}\n🎯 **Categoria:** ${category}\n⭐ **Nota:** ${formattedScore}`;
-      
+
       const promises: any[] = [];
       roomsSnap.forEach((roomDoc) => {
         const roomId = roomDoc.id;
@@ -154,14 +186,14 @@ export default function RefereePage() {
             pinned: false,
             replyToId: null,
             replyToName: null,
-            replyToText: null
+            replyToText: null,
           }).then(() => {
             return updateDoc(doc(db, "chat_rooms", roomId), {
               lastMessageText: `📢 [Resultado] ${gymnastName} - ${category}: ${formattedScore}`,
               lastMessageAt: Date.now(),
-              lastMessageAuthorName: "Arbitragem"
+              lastMessageAuthorName: "Arbitragem",
             });
-          })
+          }),
         );
       });
       await Promise.all(promises);
@@ -178,7 +210,10 @@ export default function RefereePage() {
       await setDoc(doc(db, "liveCommand", "audio"), data);
     } catch (e: any) {
       console.error("Error triggering beep:", e);
-      setStatusMsg({ text: "Erro ao tocar beep: " + (e.message || "Erro desconhecido"), type: "error" });
+      setStatusMsg({
+        text: "Erro ao tocar beep: " + (e.message || "Erro desconhecido"),
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
     }
   };
@@ -187,11 +222,17 @@ export default function RefereePage() {
     try {
       const data = { action: "stop_music", updatedAt: Date.now() };
       await setDoc(doc(db, "liveCommand", "audio"), data);
-      setStatusMsg({ text: "Música interrompida para todos!", type: "success" });
+      setStatusMsg({
+        text: "Música interrompida para todos!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
     } catch (e: any) {
       console.error("Error stopping music:", e);
-      setStatusMsg({ text: "Erro ao parar música: " + e.message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao parar música: " + e.message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
     }
   };
@@ -201,7 +242,10 @@ export default function RefereePage() {
     unlockGlobalAudio();
 
     if (!selectedCompId || !selectedGymnastId) {
-      setStatusMsg({ text: "Selecione competição e ginasta antes de iniciar.", type: "error" });
+      setStatusMsg({
+        text: "Selecione competição e ginasta antes de iniciar.",
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
       return;
     }
@@ -227,25 +271,29 @@ export default function RefereePage() {
 
       // Play music globally if there is any and category is FX
       if (selectedCat === "FX" && currentGymnast?.musicBase64) {
-         try {
-           const cmdData = {
-             action: "play_music",
-             url: currentGymnast.musicBase64,
-             gymnastName: currentGymnast?.competitionName || currentGymnast?.username || "",
-             team: currentGymnast?.team || "Independente",
-             category: selectedCat,
-             triggerBeep: false,
-             updatedAt: Date.now()
-           };
-           await setDoc(doc(db, "liveCommand", "audio"), cmdData);
-         } catch (e) {
-           console.log("Error triggering global music:", e);
-         }
+        try {
+          const cmdData = {
+            action: "play_music",
+            url: currentGymnast.musicBase64,
+            gymnastName:
+              currentGymnast?.competitionName || currentGymnast?.username || "",
+            team: currentGymnast?.team || "Independente",
+            category: selectedCat,
+            triggerBeep: false,
+            updatedAt: Date.now(),
+          };
+          await setDoc(doc(db, "liveCommand", "audio"), cmdData);
+        } catch (e) {
+          console.log("Error triggering global music:", e);
+        }
       }
       // Automations removed: The referee will manually click the beep button when desired.
     } catch (err: any) {
       console.error("Error starting live performance:", err);
-      setStatusMsg({ text: "Erro ao iniciar atleta em quadra: " + err.message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao iniciar atleta em quadra: " + err.message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 8000);
     }
   };
@@ -253,7 +301,9 @@ export default function RefereePage() {
   const endLive = async () => {
     setIsLive(false);
     try {
-      await deleteDoc(doc(db, "livePerformances", selectedCompId + "_" + selectedCat));
+      await deleteDoc(
+        doc(db, "livePerformances", selectedCompId + "_" + selectedCat),
+      );
     } catch (err) {
       console.error("Error clearing live status", err);
     }
@@ -262,7 +312,7 @@ export default function RefereePage() {
     try {
       await setDoc(doc(db, "liveCommand", "audio"), {
         action: "stop_music",
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       });
     } catch (e) {
       console.error("Error stopping music on endLive:", e);
@@ -279,48 +329,67 @@ export default function RefereePage() {
 
   const saveScore = async () => {
     if (!comp) {
-      setStatusMsg({ text: "Competição não encontrada ou inválida.", type: "error" });
+      setStatusMsg({
+        text: "Competição não encontrada ou inválida.",
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
       return;
     }
 
-    const isFinals = comp?.type && typeof comp.type === "string" && comp.type.includes("Finais");
+    const isFinals =
+      comp?.type &&
+      typeof comp.type === "string" &&
+      comp.type.includes("Finais");
 
-    if (
-      selectedCat === "VT" &&
-      isFinals &&
-      vault1DocId === null
-    ) {
+    if (selectedCat === "VT" && isFinals && vault1DocId === null) {
       // Save Vault 1 to DB right now, but remain live to judge vault 2
       let totalV1 = eScore + dVal;
       try {
-         const docRef = await addDoc(collection(db, "scores"), {
-             competitionId: selectedCompId,
-             gymnastId: selectedGymnastId,
-             gymnastName: currentGymnast?.competitionName || currentGymnast?.username || "Ginasta Sem Nome",
-             team: currentGymnast?.team || "Independente",
-             category: selectedCat,
-             dScore: dVal,
-             eScore: eScore,
-             finalScore: totalV1,
-             deductions,
-             vtDetails: {
-                vault1: { dScore: dVal, eScore, deductions },
-                vault2: null
-             },
-             refereeName: userData?.username || "Árbitro",
-             createdAt: Date.now(),
-         });
-         setVault1DocId(docRef.id);
-         notifyScoreInChat(currentGymnast?.competitionName || currentGymnast?.username || "Ginasta Sem Nome", totalV1, "VT", "Salto 1", currentGymnast?.photoURL);
-         setVaultScores([{ dScore: dVal, eScore }]);
-         setDScore("");
-         setDeductions([]);
-         setStatusMsg({ text: "Salto 1 salvo e publicado! Avalie o Salto 2 agora.", type: "success" });
-         setTimeout(() => setStatusMsg(null), 5000);
+        const docRef = await addDoc(collection(db, "scores"), {
+          competitionId: selectedCompId,
+          gymnastId: selectedGymnastId,
+          gymnastName:
+            currentGymnast?.competitionName ||
+            currentGymnast?.username ||
+            "Ginasta Sem Nome",
+          team: currentGymnast?.team || "Independente",
+          category: selectedCat,
+          dScore: dVal,
+          eScore: eScore,
+          finalScore: totalV1,
+          deductions,
+          vtDetails: {
+            vault1: { dScore: dVal, eScore, deductions },
+            vault2: null,
+          },
+          refereeName: userData?.username || "Árbitro",
+          createdAt: Date.now(),
+        });
+        setVault1DocId(docRef.id);
+        notifyScoreInChat(
+          currentGymnast?.competitionName ||
+            currentGymnast?.username ||
+            "Ginasta Sem Nome",
+          totalV1,
+          "VT",
+          "Salto 1",
+          currentGymnast?.photoURL,
+        );
+        setVaultScores([{ dScore: dVal, eScore }]);
+        setDScore("");
+        setDeductions([]);
+        setStatusMsg({
+          text: "Salto 1 salvo e publicado! Avalie o Salto 2 agora.",
+          type: "success",
+        });
+        setTimeout(() => setStatusMsg(null), 5000);
       } catch (err: any) {
-         setStatusMsg({ text: "Erro ao salvar Salto 1: " + (err.message || err), type: "error" });
-         setTimeout(() => setStatusMsg(null), 8000);
+        setStatusMsg({
+          text: "Erro ao salvar Salto 1: " + (err.message || err),
+          type: "error",
+        });
+        setTimeout(() => setStatusMsg(null), 8000);
       }
       return;
     }
@@ -330,52 +399,70 @@ export default function RefereePage() {
     let totalScore = finalScore;
     let vtDetails = null;
 
-    if (
-      selectedCat === "VT" &&
-      isFinals &&
-      vault1DocId !== null
-    ) {
+    if (selectedCat === "VT" && isFinals && vault1DocId !== null) {
       vtDetails = {
         vault1: vaultScores[0],
         vault2: { dScore: dVal, eScore, deductions },
       };
       // Average
-      const v1Total = vaultScores[0].dScore + vaultScores[0].eScore - vaultScores[0].deductions?.reduce((acc: any, curr: any) => acc + curr.value, 0) || 0;
-      const deduct1 = vaultScores[0].deductions ? vaultScores[0].deductions.reduce((ac: any, c: any) => ac + c.value, 0) : 0;
+      const v1Total =
+        vaultScores[0].dScore +
+          vaultScores[0].eScore -
+          vaultScores[0].deductions?.reduce(
+            (acc: any, curr: any) => acc + curr.value,
+            0,
+          ) || 0;
+      const deduct1 = vaultScores[0].deductions
+        ? vaultScores[0].deductions.reduce((ac: any, c: any) => ac + c.value, 0)
+        : 0;
       const v1Actual = vaultScores[0].dScore + vaultScores[0].eScore - deduct1;
-      
+
       const deduct2 = deductions.reduce((ac, c) => ac + c.value, 0);
       const v2Actual = dVal + eScore - deduct2;
       totalScore = (v1Actual + v2Actual) / 2;
 
       try {
-         await updateDoc(doc(db, "scores", vault1DocId), {
-            vtDetails: vtDetails,
-            dScore: finalDStr, // this saves the latest jump's D score, not ideal but mostly display
-            eScore: finalEStr,
-            finalScore: totalScore,
-            deductions: deductions // the latest deductions
-         });
-         await addDoc(collection(db, "notifications"), {
-            title: "Média Publicada! 🤸‍♂️",
-            message: `Médias consolidadas no Salto! ${currentGymnast?.competitionName || currentGymnast?.username || "Ginasta Sem Nome"} tirou ${totalScore.toFixed(3)}.`,
-            type: "score",
-            link: `/competitions/${selectedCompId}`,
-            createdAt: Date.now(),
-            senderId: userData?.uid
-         });
-         notifyScoreInChat(currentGymnast?.competitionName || currentGymnast?.username || "Ginasta Sem Nome", totalScore, "VT", "Média VT", currentGymnast?.photoURL);
-         setStatusMsg({ text: "Salto 2 publicado com sucesso! Média calculada.", type: "success" });
-         setTimeout(() => setStatusMsg(null), 6000);
-         endLive();
-         setDScore("");
-         setDeductions([]);
-         setVaultScores([]);
-         setVault1DocId(null);
-         setSelectedGymnastId("");
+        await updateDoc(doc(db, "scores", vault1DocId), {
+          vtDetails: vtDetails,
+          dScore: finalDStr, // this saves the latest jump's D score, not ideal but mostly display
+          eScore: finalEStr,
+          finalScore: totalScore,
+          deductions: deductions, // the latest deductions
+        });
+        await addDoc(collection(db, "notifications"), {
+          title: "Média Publicada! 🤸‍♂️",
+          message: `Médias consolidadas no Salto! ${currentGymnast?.competitionName || currentGymnast?.username || "Ginasta Sem Nome"} tirou ${totalScore.toFixed(3)}.`,
+          type: "score",
+          link: `/competitions/${selectedCompId}`,
+          createdAt: Date.now(),
+          senderId: userData?.uid,
+        });
+        notifyScoreInChat(
+          currentGymnast?.competitionName ||
+            currentGymnast?.username ||
+            "Ginasta Sem Nome",
+          totalScore,
+          "VT",
+          "Média VT",
+          currentGymnast?.photoURL,
+        );
+        setStatusMsg({
+          text: "Salto 2 publicado com sucesso! Média calculada.",
+          type: "success",
+        });
+        setTimeout(() => setStatusMsg(null), 6000);
+        endLive();
+        setDScore("");
+        setDeductions([]);
+        setVaultScores([]);
+        setVault1DocId(null);
+        setSelectedGymnastId("");
       } catch (err: any) {
-         setStatusMsg({ text: "Erro ao salvar Salto 2: " + (err.message || err), type: "error" });
-         setTimeout(() => setStatusMsg(null), 8000);
+        setStatusMsg({
+          text: "Erro ao salvar Salto 2: " + (err.message || err),
+          type: "error",
+        });
+        setTimeout(() => setStatusMsg(null), 8000);
       }
       return; // end here
     }
@@ -385,7 +472,9 @@ export default function RefereePage() {
         competitionId: selectedCompId,
         gymnastId: selectedGymnastId,
         gymnastName:
-          currentGymnast?.competitionName || currentGymnast?.username || "Ginasta Sem Nome",
+          currentGymnast?.competitionName ||
+          currentGymnast?.username ||
+          "Ginasta Sem Nome",
         team: currentGymnast?.team || "Independente",
         category: selectedCat,
         dScore: finalDStr,
@@ -403,11 +492,22 @@ export default function RefereePage() {
         type: "score",
         link: `/competitions/${selectedCompId}`,
         createdAt: Date.now(),
-        senderId: userData?.uid
+        senderId: userData?.uid,
       });
 
-      notifyScoreInChat(currentGymnast?.competitionName || currentGymnast?.username || "Ginasta Sem Nome", totalScore, selectedCat, "", currentGymnast?.photoURL);
-      setStatusMsg({ text: "Nota publicada com sucesso! Você pode iniciar uma nova avaliação.", type: "success" });
+      notifyScoreInChat(
+        currentGymnast?.competitionName ||
+          currentGymnast?.username ||
+          "Ginasta Sem Nome",
+        totalScore,
+        selectedCat,
+        "",
+        currentGymnast?.photoURL,
+      );
+      setStatusMsg({
+        text: "Nota publicada com sucesso! Você pode iniciar uma nova avaliação.",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 6000);
       endLive();
       setDScore("");
@@ -417,7 +517,10 @@ export default function RefereePage() {
       setSelectedGymnastId("");
     } catch (err: any) {
       console.error(err);
-      setStatusMsg({ text: "Erro ao salvar nota: " + (err.message || err), type: "error" });
+      setStatusMsg({
+        text: "Erro ao salvar nota: " + (err.message || err),
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 8000);
     }
   };
@@ -426,7 +529,8 @@ export default function RefereePage() {
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       <div className="mb-6 border-b border-slate-800 pb-4">
         <h1 className="text-3xl font-black text-white flex items-center gap-3 italic uppercase tracking-tighter">
-          <ShieldAlert className="w-8 h-8 text-[#009c3b]" /> Painel Administrativo
+          <ShieldAlert className="w-8 h-8 text-[#009c3b]" /> Painel
+          Administrativo
         </h1>
         <p className="text-slate-400 text-sm mt-2">
           Gerencie competições ativas e deduções ao vivo.
@@ -434,13 +538,15 @@ export default function RefereePage() {
       </div>
 
       {statusMsg && (
-        <div className={`p-4 rounded-xl text-sm font-bold border transition-all ${
-          statusMsg.type === "success" 
-            ? "bg-green-500/10 border-green-500/30 text-green-400" 
-            : statusMsg.type === "info"
-              ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
-              : "bg-red-500/10 border-red-500/30 text-red-400"
-        }`}>
+        <div
+          className={`p-4 rounded-xl text-sm font-bold border transition-all ${
+            statusMsg.type === "success"
+              ? "bg-green-500/10 border-green-500/30 text-green-400"
+              : statusMsg.type === "info"
+                ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
+                : "bg-red-500/10 border-red-500/30 text-red-400"
+          }`}
+        >
           {statusMsg.text}
         </div>
       )}
@@ -475,10 +581,17 @@ export default function RefereePage() {
                     </span>
                   </span>
                 ) : (
-                  <span className="text-slate-500 font-medium">Selecione uma competição...</span>
+                  <span className="text-slate-500 font-medium">
+                    Selecione uma competição...
+                  </span>
                 )}
               </span>
-              <ChevronDown className={clsx("w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ml-2", isCompOpen && "rotate-180")} />
+              <ChevronDown
+                className={clsx(
+                  "w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ml-2",
+                  isCompOpen && "rotate-180",
+                )}
+              />
             </button>
 
             {isCompOpen && (
@@ -508,11 +621,13 @@ export default function RefereePage() {
                       "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between",
                       !selectedCompId
                         ? "bg-slate-800 text-white"
-                        : "text-slate-400 hover:text-white hover:bg-slate-900"
+                        : "text-slate-400 hover:text-white hover:bg-slate-900",
                     )}
                   >
                     <span>Limpar Seleção</span>
-                    {!selectedCompId && <Check className="w-3.5 h-3.5 text-[#00a84c]" />}
+                    {!selectedCompId && (
+                      <Check className="w-3.5 h-3.5 text-[#00a84c]" />
+                    )}
                   </button>
 
                   <div className="border-t border-slate-900 my-1"></div>
@@ -535,7 +650,7 @@ export default function RefereePage() {
                           "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center justify-between gap-2.5 border",
                           selectedCompId === c.id
                             ? "bg-[#00a84c]/10 text-[#00a84c] border-[#00a84c]/30"
-                            : "text-slate-300 hover:text-white hover:bg-slate-900 border-transparent"
+                            : "text-slate-300 hover:text-white hover:bg-slate-900 border-transparent",
                         )}
                       >
                         <div className="flex flex-col truncate">
@@ -544,7 +659,9 @@ export default function RefereePage() {
                             Tipo: {c.type}
                           </span>
                         </div>
-                        {selectedCompId === c.id && <Check className="w-3.5 h-3.5 text-[#00a84c] shrink-0" />}
+                        {selectedCompId === c.id && (
+                          <Check className="w-3.5 h-3.5 text-[#00a84c] shrink-0" />
+                        )}
                       </button>
                     ))
                   )}
@@ -570,23 +687,39 @@ export default function RefereePage() {
                   <>
                     <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
                       {currentGymnast.photoURL ? (
-                        <img src={currentGymnast.photoURL} alt="" className="w-full h-full object-cover" />
+                        <img
+                          src={currentGymnast.photoURL || undefined}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         <User className="w-3.5 h-3.5 text-slate-500" />
                       )}
                     </div>
                     <div className="flex flex-col truncate">
-                      <span className="font-extrabold text-[#00a84c] tracking-tight">{currentGymnast.competitionName || currentGymnast.username}</span>
+                      <span className="font-extrabold text-[#00a84c] tracking-tight">
+                        {currentGymnast.competitionName ||
+                          currentGymnast.username}
+                      </span>
                       {currentGymnast.club && (
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{currentGymnast.club}</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                          {currentGymnast.club}
+                        </span>
                       )}
                     </div>
                   </>
                 ) : (
-                  <span className="text-slate-500 font-medium">Selecione um ginasta...</span>
+                  <span className="text-slate-500 font-medium">
+                    Selecione um ginasta...
+                  </span>
                 )}
               </span>
-              <ChevronDown className={clsx("w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ml-2", isGymnastOpen && "rotate-180")} />
+              <ChevronDown
+                className={clsx(
+                  "w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0 ml-2",
+                  isGymnastOpen && "rotate-180",
+                )}
+              />
             </button>
 
             {isGymnastOpen && (
@@ -616,11 +749,13 @@ export default function RefereePage() {
                       "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between",
                       !selectedGymnastId
                         ? "bg-slate-800 text-white"
-                        : "text-slate-400 hover:text-white hover:bg-slate-900"
+                        : "text-slate-400 hover:text-white hover:bg-slate-900",
                     )}
                   >
                     <span>Limpar Seleção</span>
-                    {!selectedGymnastId && <Check className="w-3.5 h-3.5 text-[#00a84c]" />}
+                    {!selectedGymnastId && (
+                      <Check className="w-3.5 h-3.5 text-[#00a84c]" />
+                    )}
                   </button>
 
                   <div className="border-t border-slate-900 my-1"></div>
@@ -643,25 +778,35 @@ export default function RefereePage() {
                           "w-full text-left px-3 py-2 rounded-xl text-xs font-sans transition-all flex items-center justify-between gap-2.5 border",
                           selectedGymnastId === g.id
                             ? "bg-[#00a84c]/10 text-[#00a84c] border-[#00a84c]/30"
-                            : "text-slate-300 hover:text-white hover:bg-slate-900 border-transparent"
+                            : "text-slate-300 hover:text-white hover:bg-slate-900 border-transparent",
                         )}
                       >
                         <div className="flex items-center gap-2.5 truncate">
                           <div className="w-7 h-7 rounded-full bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
                             {g.photoURL ? (
-                              <img src={g.photoURL} alt="" className="w-full h-full object-cover" />
+                              <img
+                                src={g.photoURL || undefined}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <User className="w-3.5 h-3.5 text-slate-500" />
                             )}
                           </div>
                           <div className="flex flex-col truncate">
-                            <span className="font-extrabold truncate">{g.competitionName || g.username}</span>
+                            <span className="font-extrabold truncate">
+                              {g.competitionName || g.username}
+                            </span>
                             {g.club && (
-                              <span className="text-[9px] text-slate-500 truncate font-semibold uppercase">{g.club}</span>
+                              <span className="text-[9px] text-slate-500 truncate font-semibold uppercase">
+                                {g.club}
+                              </span>
                             )}
                           </div>
                         </div>
-                        {selectedGymnastId === g.id && <Check className="w-3.5 h-3.5 text-[#00a84c] shrink-0" />}
+                        {selectedGymnastId === g.id && (
+                          <Check className="w-3.5 h-3.5 text-[#00a84c] shrink-0" />
+                        )}
                       </button>
                     ))
                   )}
@@ -684,7 +829,7 @@ export default function RefereePage() {
                     selectedCat === cat
                       ? "bg-slate-700 text-white"
                       : "text-slate-500 hover:text-white bg-transparent",
-                    isLive && "opacity-50 cursor-not-allowed"
+                    isLive && "opacity-50 cursor-not-allowed",
                   )}
                 >
                   {cat}
@@ -711,17 +856,17 @@ export default function RefereePage() {
               </button>
             )}
             <button
-               onClick={handleBeep}
-               className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center cursor-pointer"
+              onClick={handleBeep}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center cursor-pointer"
             >
-               BEEP
+              BEEP
             </button>
             {selectedCat === "FX" && (
               <button
-                 onClick={handleStopMusic}
-                 className="bg-red-600 hover:bg-red-500 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-red-950/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                onClick={handleStopMusic}
+                className="bg-red-600 hover:bg-red-500 text-white px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-red-950/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                 PARAR MÚSICA
+                PARAR MÚSICA
               </button>
             )}
           </div>
@@ -768,10 +913,10 @@ export default function RefereePage() {
                     key={d}
                     onClick={() => addDeduction(d, `Erro Técnico ${d}`)}
                     className={clsx(
-                       "py-2 rounded-lg text-sm font-mono border transition-colors",
-                       d >= 1.0 
-                          ? "bg-red-900/20 hover:bg-red-900/40 border-red-800/50 text-red-400" 
-                          : "bg-slate-700/50 hover:bg-slate-700 border-slate-600 text-white"
+                      "py-2 rounded-lg text-sm font-mono border transition-colors",
+                      d >= 1.0
+                        ? "bg-red-900/20 hover:bg-red-900/40 border-red-800/50 text-red-400"
+                        : "bg-slate-700/50 hover:bg-slate-700 border-slate-600 text-white",
                     )}
                   >
                     - {d.toFixed(1)}
@@ -791,7 +936,8 @@ export default function RefereePage() {
               />
               <button
                 onClick={() => {
-                  if (customDeduction) addDeduction(parseFloat(customDeduction), "Dedução Custom");
+                  if (customDeduction)
+                    addDeduction(parseFloat(customDeduction), "Dedução Custom");
                   setCustomDeduction("");
                 }}
                 className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors"
@@ -799,7 +945,7 @@ export default function RefereePage() {
                 Add
               </button>
             </div>
-            
+
             {deductions.length > 0 && (
               <div className="bg-black/20 rounded-xl p-3 border border-white/5 min-h-[4rem] max-h-32 overflow-y-auto">
                 {deductions.map((d, i) => (
@@ -831,12 +977,18 @@ export default function RefereePage() {
               </div>
               <div className="flex justify-between items-center text-xs font-medium">
                 <span className="text-slate-400">Nota Execução (Max 10)</span>
-                <span className="font-mono text-white">{eScore.toFixed(3)}</span>
+                <span className="font-mono text-white">
+                  {eScore.toFixed(3)}
+                </span>
               </div>
               <div className="h-px bg-slate-700/50 my-2"></div>
               <div className="flex justify-between items-end">
-                <span className="text-[10px] uppercase font-black tracking-widest text-[#009c3b]">Total Atual</span>
-                <span className="text-3xl font-mono font-black text-white">{finalScore.toFixed(3)}</span>
+                <span className="text-[10px] uppercase font-black tracking-widest text-[#009c3b]">
+                  Total Atual
+                </span>
+                <span className="text-3xl font-mono font-black text-white">
+                  {finalScore.toFixed(3)}
+                </span>
               </div>
             </div>
 
@@ -846,13 +998,19 @@ export default function RefereePage() {
               className="w-full py-4 bg-white text-black font-black rounded-xl hover:bg-yellow-400 transition-colors uppercase tracking-widest text-sm disabled:opacity-50 disabled:hover:bg-white flex flex-col items-center justify-center gap-1 leading-none shadow-lg shadow-white/10"
             >
               <span>
-                {selectedCat === "VT" && comp?.type?.includes("Finais") && vault1DocId === null
+                {selectedCat === "VT" &&
+                comp?.type?.includes("Finais") &&
+                vault1DocId === null
                   ? "SALVAR SALTO 1"
                   : "PUBLICAR NOTA"}
               </span>
-              {selectedCat === "VT" && comp?.type?.includes("Finais") && vault1DocId !== null && (
-                <span className="text-[10px] text-black/60 font-bold">MÉDIA DOS 2 SALTOS</span>
-              )}
+              {selectedCat === "VT" &&
+                comp?.type?.includes("Finais") &&
+                vault1DocId !== null && (
+                  <span className="text-[10px] text-black/60 font-bold">
+                    MÉDIA DOS 2 SALTOS
+                  </span>
+                )}
             </button>
           </div>
         </div>

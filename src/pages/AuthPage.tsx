@@ -14,8 +14,12 @@ import { Trophy, Lock, User, Sparkles, Check, Info } from "lucide-react";
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const [authTitle, setAuthTitle] = useState("Portal de Resultados & Arbitragem");
-  const [authHelpText, setAuthHelpText] = useState("Dúvidas ou problemas? Contate a comissão GYMSTARS BRASIL.");
+  const [authTitle, setAuthTitle] = useState(
+    "Portal de Resultados & Arbitragem",
+  );
+  const [authHelpText, setAuthHelpText] = useState(
+    "Dúvidas ou problemas? Contate a comissão GYMSTARS BRASIL.",
+  );
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "appContent", "branding"), (snap) => {
@@ -27,7 +31,7 @@ export default function AuthPage() {
     });
     return () => unsub();
   }, []);
-  
+
   // Login fields
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -84,7 +88,9 @@ export default function AuthPage() {
 
     const trimmedUsername = username.trim().toLowerCase();
     if (!/^[a-z0-9]+$/.test(trimmedUsername)) {
-      setError("O nome de usuário deve conter apenas letras minúsculas e números, sem espaços ou símbolos. Exemplo: simonebiles ou patinho223.");
+      setError(
+        "O nome de usuário deve conter apenas letras minúsculas e números, sem espaços ou símbolos. Exemplo: simonebiles ou patinho223.",
+      );
       return;
     }
 
@@ -101,17 +107,16 @@ export default function AuthPage() {
     setLoading(true);
 
     try {
-
       // Create remote user in the Firebase auth system using a virtual email
       const virtualEmail = `${trimmedUsername}@gymstars.internal`;
       const result = await createUserWithEmailAndPassword(
         auth,
         virtualEmail,
-        registerPassword
+        registerPassword,
       );
 
       const userId = result.user?.uid;
-      
+
       if (userId) {
         // Automatically grant Admin for admin identifiers, otherwise Visitante
         const tag =
@@ -122,7 +127,9 @@ export default function AuthPage() {
         // Save metadata fields into the Supabase database table "users"
         await setDoc(doc(db, "users", userId), {
           uid: userId,
-          email: result.user?.email || `pass_${registerPassword}_${userId}@gymstars.internal`,
+          email:
+            result.user?.email ||
+            `pass_${registerPassword}_${userId}@gymstars.internal`,
           username: trimmedUsername,
           displayName: trimmedUsername,
           photoURL: null,
@@ -131,7 +138,10 @@ export default function AuthPage() {
         });
 
         // Set virtual session active
-        localStorage.setItem("gymstars_logged_in_user", JSON.stringify(result.user));
+        localStorage.setItem(
+          "gymstars_logged_in_user",
+          JSON.stringify(result.user),
+        );
         // Force authentication update in memory
         window.location.reload();
       }
@@ -151,10 +161,14 @@ export default function AuthPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[#009c3b]/10 to-[#ffdf00]/5 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="w-[92vw] sm:w-[440px] min-w-[280px] max-w-md bg-[#070F1C] border border-slate-800 rounded-3xl shadow-2xl p-5 sm:p-8 box-border relative z-10 transition-all duration-300">
-        
         {/* Top Branding Section */}
         <div className="flex flex-col items-center mb-6 text-center">
-          <GymStarsLogo size="md" variant="vertical" className="mb-4" section="auth" />
+          <GymStarsLogo
+            size="md"
+            variant="vertical"
+            className="mb-4"
+            section="auth"
+          />
           <p className="text-slate-400 text-[10px] mt-1.5 uppercase tracking-widest font-black text-center">
             {authTitle}
           </p>

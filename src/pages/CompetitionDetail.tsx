@@ -223,7 +223,9 @@ export default function CompetitionDetail() {
               };
 
               const teamMembers = allUsers.filter(
-                (u) => u.team === top3[i].team,
+                (u) =>
+                  u.team === top3[i].team &&
+                  scores.some((s) => s.gymnastId === u.id),
               );
 
               for (const member of teamMembers) {
@@ -327,7 +329,7 @@ export default function CompetitionDetail() {
   } else if (comp?.type === "Final AA") {
     availableTabs = ["AA", "VT", "UB", "BB", "FX"];
   } else if (comp?.type === "Final TF") {
-    availableTabs = ["TF", "VT", "UB", "BB", "FX"];
+    availableTabs = ["TF", "AA", "VT", "UB", "BB", "FX"];
   }
 
   useEffect(() => {

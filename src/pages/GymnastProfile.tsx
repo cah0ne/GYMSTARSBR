@@ -19,6 +19,7 @@ export default function GymnastProfile() {
   const { userData } = useOutletContext<{ userData: UserData | null }>();
   const [gymnast, setGymnast] = useState<any>(null);
   const [scores, setScores] = useState<any[]>([]);
+  const [globalRank, setGlobalRank] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -31,26 +32,80 @@ export default function GymnastProfile() {
       setScores(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),
     );
 
+    // Get rank among all gymnasts based on medals
+    const qRank = query(collection(db, "users"), where("tag", "==", "Ginasta"));
+    const unsubRank = onSnapshot(qRank, (snap) => {
+      const allGymnasts = snap.docs.map((d) => {
+        const data = d.data();
+        const medals = data.medals || { gold: 0, silver: 0, bronze: 0 };
+        const mGold = medals.gold || 0;
+        const mSilver = medals.silver || 0;
+        const mBronze = medals.bronze || 0;
+        const total = mGold + mSilver + mBronze;
+        return {
+          id: d.id,
+          total,
+          gold: mGold,
+          silver: mSilver,
+          bronze: mBronze,
+        };
+      });
+
+      allGymnasts.sort(
+        (a, b) =>
+          b.gold - a.gold ||
+          b.silver - a.silver ||
+          b.bronze - a.bronze ||
+          b.total - a.total,
+      );
+
+      let rank = 1;
+      let prevProfile = "";
+      let myRank = null;
+
+      for (let i = 0; i < allGymnasts.length; i++) {
+        const curProfile = `${allGymnasts[i].gold}-${allGymnasts[i].silver}-${allGymnasts[i].bronze}-${allGymnasts[i].total}`;
+        if (curProfile !== prevProfile) {
+          rank = i + 1;
+          prevProfile = curProfile;
+        }
+        if (allGymnasts[i].id === id && allGymnasts[i].total > 0) {
+          myRank = rank;
+          break;
+        }
+      }
+      setGlobalRank(myRank);
+    });
+
     return () => {
       unsub();
       unsubS();
+      unsubRank();
     };
   }, [id]);
 
-  if (!gymnast)
-    return <div className="p-8 text-slate-400">Carregando...</div>;
+  if (!gymnast) return <div className="p-8 text-slate-400">Carregando...</div>;
 
   const isGymnastRule = gymnast.tag === "Ginasta";
 
   const calcMedals = () => {
+    if (gymnast.medals) {
+      return {
+        gold: gymnast.medals.gold || 0,
+        silver: gymnast.medals.silver || 0,
+        bronze: gymnast.medals.bronze || 0,
+      };
+    }
     const counts = { gold: 0, silver: 0, bronze: 0 };
     if (!gymnast.badges) return counts;
     gymnast.badges.forEach((b: any) => {
       const name = typeof b === "string" ? b : b.name;
       if (name) {
         if (name.startsWith("🥇") || name.startsWith("Ouro")) counts.gold++;
-        else if (name.startsWith("🥈") || name.startsWith("Prata")) counts.silver++;
-        else if (name.startsWith("🥉") || name.startsWith("Bronze")) counts.bronze++;
+        else if (name.startsWith("🥈") || name.startsWith("Prata"))
+          counts.silver++;
+        else if (name.startsWith("🥉") || name.startsWith("Bronze"))
+          counts.bronze++;
       }
     });
     return counts;
@@ -60,16 +115,22 @@ export default function GymnastProfile() {
   return (
     <div className="space-y-6">
       {/* Upper Profile Banner */}
-      <div
-        className="rounded-3xl p-8 relative overflow-hidden bg-gradient-to-tr from-[#10b981]/20 to-[#000000] border border-white/5"
-      >
+      <div className="rounded-3xl p-8 relative overflow-hidden bg-gradient-to-tr from-[#10b981]/20 to-[#000000] border border-white/5">
+        {globalRank && (
+          <div className="absolute top-4 right-6 sm:top-6 sm:right-8 flex flex-col items-end z-20">
+            <span className="text-[9px] text-yellow-500 font-black uppercase tracking-[0.2em] opacity-80 backdrop-blur-sm">
+              Rank Brasil
+            </span>
+            <span className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-700 italic tracking-tighter drop-shadow-lg">
+              #{globalRank}
+            </span>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
-          <div
-            className="w-32 h-32 rounded-full flex items-center justify-center text-5xl overflow-hidden border-4 border-slate-900 shadow-xl shrink-0 bg-slate-900"
-          >
+          <div className="w-32 h-32 rounded-full flex items-center justify-center text-5xl overflow-hidden border-4 border-slate-900 shadow-xl shrink-0 bg-slate-900">
             {gymnast.photoURL ? (
               <img
-                src={gymnast.photoURL}
+                src={gymnast.photoURL || undefined}
                 alt="Foto"
                 className="w-full h-full object-cover select-none pointer-events-none"
                 draggable="false"
@@ -85,8 +146,12 @@ export default function GymnastProfile() {
               <span>{gymnast.tag}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-white flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
-              {gymnast.competitionName || gymnast.username}
-              {gymnast.verified && <VerifiedBadge className="w-6 h-6 text-blue-500" />}
+              {gymnast.competitionName ||
+                gymnast.displayName ||
+                gymnast.username}
+              {gymnast.verified && (
+                <VerifiedBadge className="w-6 h-6 text-blue-500" />
+              )}
             </h1>
             <div className="flex flex-col items-center sm:items-start gap-2 mt-1.5">
               <p className="text-slate-400 text-xs">@{gymnast.username}</p>
@@ -155,27 +220,33 @@ export default function GymnastProfile() {
                 <div className="flex flex-wrap gap-2">
                   {gymnast.badges.map((b: any, i: number) => {
                     const badgeName = typeof b === "string" ? b : b.name;
-                    const badgeImg = typeof b === "object" && b.imageUrl ? b.imageUrl : null;
+                    const badgeImg =
+                      typeof b === "object" && b.imageUrl ? b.imageUrl : null;
                     return (
                       <div
                         key={i}
                         className="bg-neutral-950 border border-neutral-850 rounded-xl p-2.5 flex items-center gap-2"
                       >
                         {badgeImg ? (
-                          <img 
-                            src={badgeImg} 
-                            alt={badgeName} 
-                            className="w-8 h-8 rounded-full object-cover select-none pointer-events-none" 
+                          <img
+                            src={badgeImg || undefined}
+                            alt={badgeName}
+                            className="w-8 h-8 rounded-full object-cover select-none pointer-events-none"
                             draggable="false"
                             onContextMenu={(e) => e.preventDefault()}
-                            style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                            style={{
+                              WebkitTouchCallout: "none",
+                              WebkitUserSelect: "none",
+                            }}
                           />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center">
                             <Star className="w-4 h-4" />
                           </div>
                         )}
-                        <span className="font-medium text-xs text-white">{badgeName}</span>
+                        <span className="font-medium text-xs text-white">
+                          {badgeName}
+                        </span>
                       </div>
                     );
                   })}
@@ -220,19 +291,31 @@ export default function GymnastProfile() {
             <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2 border-b border-slate-800 pb-3">
               <Shield className="w-5 h-5 text-[#009c3b]" /> Informações Gerais
             </h2>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-neutral-950 border border-slate-850 p-4 rounded-xl space-y-1">
-                <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider">Tipo de Conta</span>
-                <p className="text-sm font-bold text-slate-200">{gymnast.tag}</p>
+                <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider">
+                  Tipo de Conta
+                </span>
+                <p className="text-sm font-bold text-slate-200">
+                  {gymnast.tag}
+                </p>
               </div>
 
               {gymnast.createdAt && (
                 <div className="bg-neutral-950 border border-slate-850 p-4 rounded-xl space-y-1 flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-slate-500" />
                   <div>
-                    <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">Membro desde</span>
-                    <p className="text-xs text-slate-350">{new Date(gymnast.createdAt).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}</p>
+                    <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider block">
+                      Membro desde
+                    </span>
+                    <p className="text-xs text-slate-350">
+                      {new Date(gymnast.createdAt).toLocaleDateString("pt-BR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
                   </div>
                 </div>
               )}
@@ -240,7 +323,9 @@ export default function GymnastProfile() {
 
             <div className="bg-slate-900/40 border border-slate-800/60 p-4 rounded-xl">
               <p className="text-xs text-slate-400 italic">
-                Usuário cadastrado na plataforma GYMSTARS BRASIL. Apenas ginastas homologados possuem scoreboard público e quadro competitivo de medalhas.
+                Usuário cadastrado na plataforma GYMSTARS BRASIL. Apenas
+                ginastas homologados possuem scoreboard público e quadro
+                competitivo de medalhas.
               </p>
             </div>
           </div>
@@ -258,27 +343,33 @@ export default function GymnastProfile() {
               <div className="space-y-2">
                 {gymnast.badges.map((b: any, i: number) => {
                   const badgeName = typeof b === "string" ? b : b.name;
-                  const badgeImg = typeof b === "object" && b.imageUrl ? b.imageUrl : null;
+                  const badgeImg =
+                    typeof b === "object" && b.imageUrl ? b.imageUrl : null;
                   return (
                     <div
                       key={i}
                       className="bg-neutral-950 border border-neutral-850 rounded-xl p-3 flex items-center gap-2.5 hover:border-slate-800 transition-colors"
                     >
                       {badgeImg ? (
-                        <img 
-                          src={badgeImg} 
-                          alt={badgeName} 
-                          className="w-8 h-8 rounded-full object-cover shrink-0 select-none pointer-events-none" 
+                        <img
+                          src={badgeImg || undefined}
+                          alt={badgeName}
+                          className="w-8 h-8 rounded-full object-cover shrink-0 select-none pointer-events-none"
                           draggable="false"
                           onContextMenu={(e) => e.preventDefault()}
-                          style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                          style={{
+                            WebkitTouchCallout: "none",
+                            WebkitUserSelect: "none",
+                          }}
                         />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0 border border-blue-500/20">
                           <Award className="w-4 h-4" />
                         </div>
                       )}
-                      <span className="font-bold text-xs text-white">{badgeName}</span>
+                      <span className="font-bold text-xs text-white">
+                        {badgeName}
+                      </span>
                     </div>
                   );
                 })}

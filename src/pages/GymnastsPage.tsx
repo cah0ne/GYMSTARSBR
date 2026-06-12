@@ -13,8 +13,8 @@ export default function GymnastsPage() {
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       data.sort((a, b) =>
-        (a.competitionName || a.username).localeCompare(
-          b.competitionName || b.username,
+        (a.competitionName || a.displayName || a.username).localeCompare(
+          b.competitionName || b.displayName || b.username,
         ),
       );
       setGymnasts(data);
@@ -23,7 +23,7 @@ export default function GymnastsPage() {
   }, []);
 
   const filtered = gymnasts.filter((g) =>
-    (g.competitionName || g.username)
+    (g.competitionName || g.displayName || g.username)
       ?.toLowerCase?.()
       ?.includes?.(search.toLowerCase()),
   );
@@ -32,8 +32,12 @@ export default function GymnastsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">Ginastas</h1>
-          <p className="text-slate-400 text-sm">Atletas cadastrados na plataforma.</p>
+          <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">
+            Ginastas
+          </h1>
+          <p className="text-slate-400 text-sm">
+            Atletas cadastrados na plataforma.
+          </p>
         </div>
         <div className="relative w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
@@ -59,12 +63,10 @@ export default function GymnastsPage() {
               to={`/gymnasts/${g.id}`}
               className="block bg-neutral-900 border border-neutral-800 rounded-2xl p-5 hover:border-green-500/50 transition-colors text-center group"
             >
-              <div
-                className="w-20 h-20 mx-auto rounded-full mb-3 flex items-center justify-center text-3xl overflow-hidden bg-slate-800"
-              >
+              <div className="w-20 h-20 mx-auto rounded-full mb-3 flex items-center justify-center text-3xl overflow-hidden bg-slate-800">
                 {g.photoURL ? (
                   <img
-                    src={g.photoURL}
+                    src={g.photoURL || undefined}
                     alt={g.username}
                     className="w-full h-full object-cover select-none pointer-events-none"
                     draggable="false"
@@ -75,15 +77,19 @@ export default function GymnastsPage() {
                 )}
               </div>
               <h2 className="font-bold text-white group-hover:text-green-400 transition-colors truncate">
-                {g.competitionName || g.username}
+                {g.competitionName || g.displayName || g.username}
               </h2>
               <div className="flex items-center justify-center gap-1 mt-2 text-sm text-yellow-500">
                 <Medal className="w-4 h-4" />
                 <span>
-                  {(g.badges || []).filter((b: any) => {
-                     const name = typeof b === "string" ? b : b.name;
-                     return name && name.match(/^(🥇|🥈|🥉|Ouro|Prata|Bronze)/);
-                  }).length}{" "}
+                  {
+                    (g.badges || []).filter((b: any) => {
+                      const name = typeof b === "string" ? b : b.name;
+                      return (
+                        name && name.match(/^(🥇|🥈|🥉|Ouro|Prata|Bronze)/)
+                      );
+                    }).length
+                  }{" "}
                   Medalhas
                 </span>
               </div>

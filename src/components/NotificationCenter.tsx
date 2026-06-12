@@ -1,17 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { 
-  Bell, 
-  X, 
-  MessageSquare, 
-  Trophy, 
-  Shield, 
+import {
+  Bell,
+  X,
+  MessageSquare,
+  Trophy,
+  Shield,
   ExternalLink,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import { db, collection, query, orderBy, limit, onSnapshot, doc, updateDoc, deleteDoc, where } from "../lib/firebase";
+import {
+  db,
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  doc,
+  updateDoc,
+  deleteDoc,
+  where,
+} from "../lib/firebase";
 import { Notification } from "../types";
 import { UserData } from "../App";
 
@@ -19,7 +30,9 @@ interface NotificationCenterProps {
   userData: UserData | null;
 }
 
-export default function NotificationCenter({ userData }: NotificationCenterProps) {
+export default function NotificationCenter({
+  userData,
+}: NotificationCenterProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [lastClearedAt, setLastClearedAt] = useState(() => Date.now());
@@ -32,21 +45,29 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
       collection(db, "notifications"),
       where("createdAt", ">", lastClearedAt),
       orderBy("createdAt", "desc"),
-      limit(20)
+      limit(20),
     );
 
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Notification));
-      setNotifications(list);
-    }, (err) => {
-      // If index is missing or other issue, fallback
-      console.warn("Notification stream error:", err);
-    });
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as Notification,
+        );
+        setNotifications(list);
+      },
+      (err) => {
+        // If index is missing or other issue, fallback
+        console.warn("Notification stream error:", err);
+      },
+    );
 
     return () => unsub();
   }, [userData, lastClearedAt]);
 
-  const unreadCount = notifications.filter(n => !n.readBy?.includes(userData?.uid || "")).length;
+  const unreadCount = notifications.filter(
+    (n) => !n.readBy?.includes(userData?.uid || ""),
+  ).length;
 
   const handleMarkAsRead = async (notification: Notification) => {
     if (!userData) return;
@@ -55,7 +76,7 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
 
     try {
       await updateDoc(doc(db, "notifications", notification.id), {
-        readBy: [...currentReadBy, userData.uid]
+        readBy: [...currentReadBy, userData.uid],
       });
     } catch (err) {
       console.error("Error marking as read:", err);
@@ -77,11 +98,16 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "post": return <Shield className="w-4 h-4 text-emerald-400" />;
-      case "score": return <Trophy className="w-4 h-4 text-yellow-400" />;
-      case "live": return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case "chat": return <MessageSquare className="w-4 h-4 text-blue-400" />;
-      default: return <Bell className="w-4 h-4 text-slate-400" />;
+      case "post":
+        return <Shield className="w-4 h-4 text-emerald-400" />;
+      case "score":
+        return <Trophy className="w-4 h-4 text-yellow-400" />;
+      case "live":
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case "chat":
+        return <MessageSquare className="w-4 h-4 text-blue-400" />;
+      default:
+        return <Bell className="w-4 h-4 text-slate-400" />;
     }
   };
 
@@ -91,7 +117,9 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full hover:bg-white/5 transition-colors group"
       >
-        <Bell className={`w-6 h-6 transition-colors ${unreadCount > 0 ? "text-[#009c3b] animate-pulse" : "text-slate-400 group-hover:text-white"}`} />
+        <Bell
+          className={`w-6 h-6 transition-colors ${unreadCount > 0 ? "text-[#009c3b] animate-pulse" : "text-slate-400 group-hover:text-white"}`}
+        />
         {unreadCount > 0 && (
           <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border border-[#050B14] shadow-sm">
             {unreadCount}
@@ -102,9 +130,9 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
       <AnimatePresence>
         {isOpen && (
           <>
-            <div 
-              className="fixed inset-0 z-40 bg-transparent" 
-              onClick={() => setIsOpen(false)} 
+            <div
+              className="fixed inset-0 z-40 bg-transparent"
+              onClick={() => setIsOpen(false)}
             />
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -115,18 +143,23 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
               <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Bell className="w-4 h-4 text-[#009c3b]" />
-                  <span className="font-bold text-sm text-white uppercase tracking-wider">Notificações</span>
+                  <span className="font-bold text-sm text-white uppercase tracking-wider">
+                    Notificações
+                  </span>
                 </div>
                 <div className="flex items-center gap-3">
                   {notifications.length > 0 && (
-                    <button 
+                    <button
                       onClick={handleClear}
                       className="text-[9px] font-black text-slate-500 hover:text-red-400 uppercase tracking-tighter transition-colors"
                     >
                       Limpar
                     </button>
                   )}
-                  <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-white">
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="text-slate-500 hover:text-white"
+                  >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -152,11 +185,15 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
                         className={`p-4 hover:bg-white/5 cursor-pointer transition-colors relative group ${!isRead ? "bg-[#009c3b]/5" : ""}`}
                       >
                         <div className="flex gap-3">
-                          <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${!isRead ? "bg-slate-800" : "bg-slate-900 opacity-60"}`}>
+                          <div
+                            className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${!isRead ? "bg-slate-800" : "bg-slate-900 opacity-60"}`}
+                          >
                             {getIcon(n.type)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={`text-xs font-bold truncate ${!isRead ? "text-white" : "text-slate-400"}`}>
+                            <p
+                              className={`text-xs font-bold truncate ${!isRead ? "text-white" : "text-slate-400"}`}
+                            >
                               {n.title}
                             </p>
                             <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
@@ -164,7 +201,10 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
                             </p>
                             <div className="flex items-center justify-between mt-2">
                               <span className="text-[9px] text-slate-600 font-mono">
-                                {new Date(n.createdAt).toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(n.createdAt).toLocaleTimeString(
+                                  "pt-BR",
+                                  { hour: "2-digit", minute: "2-digit" },
+                                )}
                               </span>
                               {n.link && (
                                 <span className="text-[9px] text-[#009c3b] font-black uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -182,7 +222,6 @@ export default function NotificationCenter({ userData }: NotificationCenterProps
                   })
                 )}
               </div>
-
             </motion.div>
           </>
         )}

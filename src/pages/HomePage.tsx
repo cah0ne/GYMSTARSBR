@@ -1,60 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useOutletContext } from "react-router-dom";
-import { 
-  Trophy, 
-  BookOpen, 
-  Shapes, 
-  Users, 
-  Star, 
-  Award, 
-  Notebook, 
-  Medal, 
-  Play, 
-  Target, 
-  Sparkles, 
-  Smile, 
-  Settings, 
-  Heart, 
-  Flame, 
-  Shield, 
-  MapPin, 
-  Search,
-  MessageSquare,
-  Pin,
-  Trash2,
-  Edit2,
-  Send,
-  Plus,
-  Image as ImageIcon,
-  User,
-  X,
-  AlertCircle,
-  Link as LinkIcon,
-  ArrowRight
-} from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
-import GymStarsLogo from "../components/GymStarsLogo";
-import { 
-  db, 
-  doc, 
-  onSnapshot, 
-  collection, 
-  query, 
-  orderBy, 
-  limit, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  where, 
-  getDocs 
-} from "../lib/firebase";
-import { UserData } from "../App";
-import { RichTextEditor } from "../components/RichTextEditor";
-import VerifiedBadge from "../components/VerifiedBadge";
-import "quill/dist/quill.snow.css";
-
-// Map strings to Lucide components for dynamic icon rendering
-const IconMapping: Record<string, React.ComponentType<{ className?: string }>> = {
+import {
   Trophy,
   BookOpen,
   Shapes,
@@ -72,7 +18,64 @@ const IconMapping: Record<string, React.ComponentType<{ className?: string }>> =
   Flame,
   Shield,
   MapPin,
-  Search
+  Search,
+  MessageSquare,
+  Pin,
+  Trash2,
+  Edit2,
+  Send,
+  Plus,
+  Image as ImageIcon,
+  User,
+  X,
+  AlertCircle,
+  Link as LinkIcon,
+  ArrowRight,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import GymStarsLogo from "../components/GymStarsLogo";
+import {
+  db,
+  doc,
+  onSnapshot,
+  collection,
+  query,
+  orderBy,
+  limit,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  where,
+  getDocs,
+} from "../lib/firebase";
+import { UserData } from "../App";
+import { RichTextEditor } from "../components/RichTextEditor";
+import VerifiedBadge from "../components/VerifiedBadge";
+import "quill/dist/quill.snow.css";
+
+// Map strings to Lucide components for dynamic icon rendering
+const IconMapping: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
+  Trophy,
+  BookOpen,
+  Shapes,
+  Users,
+  Star,
+  Award,
+  Notebook,
+  Medal,
+  Play,
+  Target,
+  Sparkles,
+  Smile,
+  Settings,
+  Heart,
+  Flame,
+  Shield,
+  MapPin,
+  Search,
 };
 
 interface CustomCard {
@@ -160,10 +163,12 @@ const AVAILABLE_PAGES = [
 export default function HomePage() {
   const { userData } = useOutletContext<{ userData: UserData | null }>();
   const navigate = useNavigate();
-  const [heroSubtitle, setHeroSubtitle] = useState("A plataforma definitiva de ginástica artística do Brasil. Ao vivo, transparente e no seu ritmo.");
+  const [heroSubtitle, setHeroSubtitle] = useState(
+    "A plataforma definitiva de ginástica artística do Brasil. Ao vivo, transparente e no seu ritmo.",
+  );
   const [cards, setCards] = useState<CustomCard[]>(DEFAULT_CARDS);
   const [bannerEnabled, setBannerEnabled] = useState(false);
-  const [bannerType, setBannerType] = useState<"upload"|"url">("upload");
+  const [bannerType, setBannerType] = useState<"upload" | "url">("upload");
   const [bannerBase64, setBannerBase64] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
   const [bannerLink, setBannerLink] = useState("/");
@@ -178,7 +183,7 @@ export default function HomePage() {
   const [imageUrl, setImageUrl] = useState("");
   const [mentionedLink, setMentionedLink] = useState("");
   const [isPinned, setIsPinned] = useState(false);
-  
+
   // Edit post state
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -187,10 +192,17 @@ export default function HomePage() {
   const [editMentionedLink, setEditMentionedLink] = useState("");
 
   // Comment logic states
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>(
+    {},
+  );
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
-  const [postCommentsMap, setPostCommentsMap] = useState<Record<string, Comment[]>>({});
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [postCommentsMap, setPostCommentsMap] = useState<
+    Record<string, Comment[]>
+  >({});
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
   const [deleteConfirmationState, setDeleteConfirmationState] = useState<{
     id: string;
     postId?: string;
@@ -200,61 +212,128 @@ export default function HomePage() {
 
   const [liveCompetitions, setLiveCompetitions] = useState<any[]>([]);
 
+  // Top Gymnasts state
+  const [topGymnasts, setTopGymnasts] = useState<any[]>([]);
+
   useEffect(() => {
     // Listen for homepage content (subtitle and cards)
-    const unsubContent = onSnapshot(doc(db, "appContent", "homepage"), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.heroSubtitle) setHeroSubtitle(data.heroSubtitle);
-        setBannerEnabled(!!data.bannerEnabled);
-        setBannerType(data.bannerType || "upload");
-        setBannerBase64(data.bannerBase64 || "");
-        setBannerUrl(data.bannerUrl || "");
-        setBannerLink(data.bannerLink || "/");
-        
-        if (data.cards && Array.isArray(data.cards)) {
-          const loadedCards = [...data.cards];
-          if (!loadedCards.some(c => c.link === "/quem-somos")) {
-            loadedCards.push({
-              title: "Quem Somos",
-              desc: "Nossa história e missão.",
-              iconName: "Sparkles",
-              color: "text-indigo-400",
-              link: "/quem-somos",
-            });
+    const unsubContent = onSnapshot(
+      doc(db, "appContent", "homepage"),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.heroSubtitle) setHeroSubtitle(data.heroSubtitle);
+          setBannerEnabled(!!data.bannerEnabled);
+          setBannerType(data.bannerType || "upload");
+          setBannerBase64(data.bannerBase64 || "");
+          setBannerUrl(data.bannerUrl || "");
+          setBannerLink(data.bannerLink || "/");
+
+          if (data.cards && Array.isArray(data.cards)) {
+            const loadedCards = [...data.cards];
+            if (!loadedCards.some((c) => c.link === "/quem-somos")) {
+              loadedCards.push({
+                title: "Quem Somos",
+                desc: "Nossa história e missão.",
+                iconName: "Sparkles",
+                color: "text-indigo-400",
+                link: "/quem-somos",
+              });
+            }
+            setCards(loadedCards);
           }
-          setCards(loadedCards);
         }
-      }
-    });
+      },
+    );
 
     // Listen for posts
-    const qPosts = query(collection(db, "feed"), orderBy("createdAt", "desc"), limit(20));
-    const unsubPosts = onSnapshot(qPosts, (snap) => {
-      setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Post)));
-      setLoading(false);
-    }, (error) => {
-      console.error("Error loading posts:", error);
-      setLoading(false);
-    });
+    const qPosts = query(
+      collection(db, "feed"),
+      orderBy("createdAt", "desc"),
+      limit(20),
+    );
+    const unsubPosts = onSnapshot(
+      qPosts,
+      (snap) => {
+        setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Post));
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error loading posts:", error);
+        setLoading(false);
+      },
+    );
 
     // Listen for live competitions
-    const qLive = query(collection(db, "competitions"), where("status", "==", "ao vivo"));
+    const qLive = query(
+      collection(db, "competitions"),
+      where("status", "==", "ao vivo"),
+    );
     const unsubLive = onSnapshot(qLive, (snap) => {
       setLiveCompetitions(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+
+    // Listen for top gymnasts
+    const qGymnasts = query(
+      collection(db, "users"),
+      where("tag", "==", "Ginasta"),
+    );
+    const unsubGymnasts = onSnapshot(qGymnasts, (snap) => {
+      const gymnasts = snap.docs.map((d) => {
+        const data = d.data();
+        const m = data.medals || { gold: 0, silver: 0, bronze: 0 };
+        const total = (m.gold || 0) + (m.silver || 0) + (m.bronze || 0);
+        return {
+          id: d.id,
+          displayName: data.displayName,
+          competitionName: data.competitionName,
+          username: data.username,
+          photoURL: data.photoURL,
+          team: data.team,
+          totalMedals: total,
+          ...m,
+        };
+      });
+      // Sort and take top 5
+      const sorted = gymnasts
+        .filter((g) => g.totalMedals > 0)
+        .sort(
+          (a, b) =>
+            (b.gold || 0) - (a.gold || 0) ||
+            (b.silver || 0) - (a.silver || 0) ||
+            (b.bronze || 0) - (a.bronze || 0) ||
+            b.totalMedals - a.totalMedals,
+        )
+        .slice(0, 5);
+      // Give them a rank
+      let currentRank = 1;
+      let prevProfile = "";
+      const ranked = sorted.map((g, index) => {
+        const curProfile = `${g.gold || 0}-${g.silver || 0}-${g.bronze || 0}-${g.totalMedals}`;
+        if (curProfile !== prevProfile) {
+          currentRank = index + 1;
+          prevProfile = curProfile;
+        }
+        return { ...g, rank: currentRank };
+      });
+      setTopGymnasts(ranked);
     });
 
     return () => {
       unsubContent();
       unsubPosts();
       unsubLive();
+      unsubGymnasts();
     };
   }, []);
 
   useEffect(() => {
-    const unsubBranding = onSnapshot(doc(db, "appContent", "branding"), (snap) => {
-      if (snap.exists()) setBranding(snap.data());
-    });
+    const unsubBranding = onSnapshot(
+      doc(db, "appContent", "branding"),
+      (snap) => {
+        if (snap.exists()) setBranding(snap.data());
+      },
+    );
     return () => unsubBranding();
   }, []);
 
@@ -262,23 +341,23 @@ export default function HomePage() {
     if (posts.length === 0) return;
 
     // Listen for ALL comments for the visible posts for real-time counts
-    const postIds = posts.map(p => p.id);
-    
+    const postIds = posts.map((p) => p.id);
+
     // Firestore 'in' queries are strictly limited to 10 items.
     const chunks = [];
-    for ( let i = 0; i < postIds.length; i += 10 ) {
-       chunks.push(postIds.slice(i, i + 10));
+    for (let i = 0; i < postIds.length; i += 10) {
+      chunks.push(postIds.slice(i, i + 10));
     }
 
     const unsubs: (() => void)[] = [];
     let allCommentsAggregated: Comment[] = [];
     const newMap: Record<string, Comment[]> = {};
-    
-    // We rebuild the map whenever ANY block updates. Since we only fetch up to 20 posts, 
+
+    // We rebuild the map whenever ANY block updates. Since we only fetch up to 20 posts,
     // it's max 2 chunks.
     const updateMap = () => {
       const computedMap: Record<string, Comment[]> = {};
-      allCommentsAggregated.forEach(c => {
+      allCommentsAggregated.forEach((c) => {
         if (!computedMap[c.postId]) computedMap[c.postId] = [];
         computedMap[c.postId].push(c);
       });
@@ -286,23 +365,27 @@ export default function HomePage() {
     };
 
     chunks.forEach((chunk, chunkIndex) => {
-       const q = query(
-         collection(db, "feed_comments"), 
-         where("postId", "in", chunk)
-       );
-       
-       const unsub = onSnapshot(q, (snap) => {
-         const chunkComments = snap.docs.map(d => ({ id: d.id, ...d.data() } as Comment));
-         // Filter out this chunk's posts from aggregated, then push new ones to prevent dupes
-         allCommentsAggregated = allCommentsAggregated.filter(c => !chunk.includes(c.postId));
-         allCommentsAggregated.push(...chunkComments);
-         updateMap();
-       });
-       unsubs.push(unsub);
+      const q = query(
+        collection(db, "feed_comments"),
+        where("postId", "in", chunk),
+      );
+
+      const unsub = onSnapshot(q, (snap) => {
+        const chunkComments = snap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as Comment,
+        );
+        // Filter out this chunk's posts from aggregated, then push new ones to prevent dupes
+        allCommentsAggregated = allCommentsAggregated.filter(
+          (c) => !chunk.includes(c.postId),
+        );
+        allCommentsAggregated.push(...chunkComments);
+        updateMap();
+      });
+      unsubs.push(unsub);
     });
 
     return () => {
-       unsubs.forEach(u => u());
+      unsubs.forEach((u) => u());
     };
   }, [posts]);
 
@@ -312,7 +395,10 @@ export default function HomePage() {
     if (!userData || userData.tag !== "Admin") return;
 
     if (!title.trim() || !caption.trim()) {
-      setStatusMsg({ text: "Insira um título e uma legenda descritiva.", type: "error" });
+      setStatusMsg({
+        text: "Insira um título e uma legenda descritiva.",
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
       return;
     }
@@ -335,11 +421,19 @@ export default function HomePage() {
         type: "post",
         link: "/",
         createdAt: Date.now(),
-        senderId: userData.uid
+        senderId: userData.uid,
       });
 
-      setTitle(""); setCaption(""); setImageUrl(""); setMentionedLink(""); setIsPinned(false); setShowAddForm(false);
-      setStatusMsg({ text: "Publicação compartilhada no feed!", type: "success" });
+      setTitle("");
+      setCaption("");
+      setImageUrl("");
+      setMentionedLink("");
+      setIsPinned(false);
+      setShowAddForm(false);
+      setStatusMsg({
+        text: "Publicação compartilhada no feed!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
     } catch (e: any) {
       console.error(e);
@@ -351,7 +445,10 @@ export default function HomePage() {
   const handleUpdatePost = async (postId: string) => {
     if (!userData || userData.tag !== "Admin") return;
     if (!editTitle.trim() || !editCaption.trim()) {
-      setStatusMsg({ text: "Título e legenda são obrigatórios.", type: "error" });
+      setStatusMsg({
+        text: "Título e legenda são obrigatórios.",
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
       return;
     }
@@ -363,7 +460,10 @@ export default function HomePage() {
         mentionedLink: editMentionedLink || null,
       });
       setEditingPostId(null);
-      setStatusMsg({ text: "Publicação atualizada com sucesso!", type: "success" });
+      setStatusMsg({
+        text: "Publicação atualizada com sucesso!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
     } catch (e: any) {
       setStatusMsg({ text: "Erro ao atualizar: " + e.message, type: "error" });
@@ -375,34 +475,52 @@ export default function HomePage() {
     if (!userData || userData.tag !== "Admin") return;
     try {
       await deleteDoc(doc(db, "feed", postId));
-      const q = query(collection(db, "feed_comments"), where("postId", "==", postId));
+      const q = query(
+        collection(db, "feed_comments"),
+        where("postId", "==", postId),
+      );
       const snap = await getDocs(q);
-      snap.docs.forEach(async (d) => { await deleteDoc(doc(db, "feed_comments", d.id)); });
+      snap.docs.forEach(async (d) => {
+        await deleteDoc(doc(db, "feed_comments", d.id));
+      });
       setStatusMsg({ text: "Publicação removida.", type: "success" });
       setTimeout(() => setStatusMsg(null), 4000);
     } catch (e: any) {
       setStatusMsg({ text: "Erro ao excluir: " + e.message, type: "error" });
       setTimeout(() => setStatusMsg(null), 5000);
-    } finally { setDeleteConfirmationState(null); }
+    } finally {
+      setDeleteConfirmationState(null);
+    }
   };
 
   const handleTogglePin = async (post: Post) => {
     if (!userData || userData.tag !== "Admin") return;
     try {
       await updateDoc(doc(db, "feed", post.id), { isPinned: !post.isPinned });
-      setStatusMsg({ text: post.isPinned ? "Publicação desfixada!" : "Publicação fixada!", type: "success" });
+      setStatusMsg({
+        text: post.isPinned ? "Publicação desfixada!" : "Publicação fixada!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 3000);
-    } catch (e: any) { console.error(e); }
+    } catch (e: any) {
+      console.error(e);
+    }
   };
 
   const handleToggleLike = async (post: Post) => {
     if (!userData) return;
     const currentLikes = post.likes || [];
     const userId = userData.uid;
-    const liked = Array.isArray(currentLikes) && currentLikes.includes?.(userId);
-    const updatedLikes = liked ? currentLikes.filter((id) => id !== userId) : [...currentLikes, userId];
-    try { await updateDoc(doc(db, "feed", post.id), { likes: updatedLikes }); } 
-    catch (e: any) { console.error("Error liking:", e); }
+    const liked =
+      Array.isArray(currentLikes) && currentLikes.includes?.(userId);
+    const updatedLikes = liked
+      ? currentLikes.filter((id) => id !== userId)
+      : [...currentLikes, userId];
+    try {
+      await updateDoc(doc(db, "feed", post.id), { likes: updatedLikes });
+    } catch (e: any) {
+      console.error("Error liking:", e);
+    }
   };
 
   const handleAddComment = async (postId: string) => {
@@ -411,18 +529,29 @@ export default function HomePage() {
     if (!text.trim()) return;
     try {
       await addDoc(collection(db, "feed_comments"), {
-        postId, userId: userData.uid, username: userData.username, text: text.trim(),
-        userVerified: !!userData.verified, userPhotoURL: userData.photoURL || null, createdAt: Date.now(),
+        postId,
+        userId: userData.uid,
+        username: userData.username,
+        text: text.trim(),
+        userVerified: !!userData.verified,
+        userPhotoURL: userData.photoURL || null,
+        createdAt: Date.now(),
       });
       setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
-    } catch (e: any) { console.error("Error posting comment:", e); }
+    } catch (e: any) {
+      console.error("Error posting comment:", e);
+    }
   };
 
   const handleDeleteComment = async (commentId: string, postId: string) => {
     if (!userData) return;
-    try { await deleteDoc(doc(db, "feed_comments", commentId)); } 
-    catch (e: any) { console.error("Error deleting comment:", e); } 
-    finally { setDeleteConfirmationState(null); }
+    try {
+      await deleteDoc(doc(db, "feed_comments", commentId));
+    } catch (e: any) {
+      console.error("Error deleting comment:", e);
+    } finally {
+      setDeleteConfirmationState(null);
+    }
   };
 
   const sortedPosts = [...posts].sort((a, b) => {
@@ -431,9 +560,23 @@ export default function HomePage() {
     return b.createdAt - a.createdAt;
   });
 
-  const promptDeletePost = (post: Post) => setDeleteConfirmationState({ id: post.id, type: "post", displayName: post.title });
-  const promptDeleteComment = (commentId: string, text: string, postId: string) => 
-    setDeleteConfirmationState({ id: commentId, postId, type: "comment", displayName: text.substring(0, 50) });
+  const promptDeletePost = (post: Post) =>
+    setDeleteConfirmationState({
+      id: post.id,
+      type: "post",
+      displayName: post.title,
+    });
+  const promptDeleteComment = (
+    commentId: string,
+    text: string,
+    postId: string,
+  ) =>
+    setDeleteConfirmationState({
+      id: commentId,
+      postId,
+      type: "comment",
+      displayName: text.substring(0, 50),
+    });
 
   if (loading) {
     return (
@@ -460,69 +603,93 @@ export default function HomePage() {
       {liveCompetitions.length > 0 && (
         <div className="px-2">
           {liveCompetitions.map((comp) => (
-            <Link 
-              key={comp.id} 
+            <Link
+              key={comp.id}
               to={`/competitions/${comp.id}`}
               className="block group relative w-full overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 to-black border border-slate-800/60 p-0 mb-6 cursor-pointer shadow-2xl transition-all hover:border-slate-700 hover:shadow-red-500/10"
             >
-               {/* Cyber/scanline effect in background */}
-               <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent opacity-50 transition-opacity group-hover:opacity-100" />
-               <div className="absolute top-0 left-0 right-0 h-24 bg-red-500/5 blur-3xl group-hover:bg-red-500/10 transition-all duration-700" />
+              {/* Cyber/scanline effect in background */}
+              <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent opacity-50 transition-opacity group-hover:opacity-100" />
+              <div className="absolute top-0 left-0 right-0 h-24 bg-red-500/5 blur-3xl group-hover:bg-red-500/10 transition-all duration-700" />
 
-               <div className="relative pt-6 pb-5 flex flex-col">
-                 <div className="px-6 flex items-center justify-between z-10 mb-5">
-                   <div className="flex items-center gap-2 mb-2">
-                     <span className="relative flex h-2.5 w-2.5">
-                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
-                     </span>
-                     <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.25em]">Score Ao Vivo</span>
-                   </div>
-                   <div className="text-[10px] uppercase font-mono text-slate-500 font-medium tracking-wide">
-                     {comp.type}
-                   </div>
-                 </div>
-                 
-                   <div className="w-full overflow-hidden py-4 border-y border-white/[0.03] bg-white/[0.01]" style={{ maskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)", WebkitMaskImage: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)" }}>
-                    <div className="animate-seamless-marquee flex items-center gap-8">
-                      {[...Array(6)].map((_, i) => (
-                        <h3 key={i} className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 font-black text-3xl sm:text-4xl italic uppercase tracking-tighter whitespace-nowrap">
-                          {comp.name}
-                          <span className="inline-block mx-8 text-red-500/40 font-sans font-light text-2xl not-italic">✦</span>
-                        </h3>
-                      ))}
-                    </div>
-                   </div>
+              <div className="relative pt-6 pb-5 flex flex-col">
+                <div className="px-6 flex items-center justify-between z-10 mb-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+                    </span>
+                    <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.25em]">
+                      Score Ao Vivo
+                    </span>
+                  </div>
+                  <div className="text-[10px] uppercase font-mono text-slate-500 font-medium tracking-wide">
+                    {comp.type}
+                  </div>
+                </div>
 
-                 <div className="px-6 mt-5 flex items-center justify-between">
-                   <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest group-hover:text-slate-300 transition-colors">Acompanhar resultados</span>
-                   <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-red-400 group-hover:translate-x-1.5 transition-all duration-300" />
-                 </div>
-               </div>
+                <div
+                  className="w-full overflow-hidden py-4 border-y border-white/[0.03] bg-white/[0.01]"
+                  style={{
+                    maskImage:
+                      "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+                    WebkitMaskImage:
+                      "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+                  }}
+                >
+                  <div className="animate-seamless-marquee flex items-center gap-8">
+                    {[...Array(6)].map((_, i) => (
+                      <h3
+                        key={i}
+                        className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 font-black text-3xl sm:text-4xl italic uppercase tracking-tighter whitespace-nowrap"
+                      >
+                        {comp.name}
+                        <span className="inline-block mx-8 text-red-500/40 font-sans font-light text-2xl not-italic">
+                          ✦
+                        </span>
+                      </h3>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="px-6 mt-5 flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest group-hover:text-slate-300 transition-colors">
+                    Acompanhar resultados
+                  </span>
+                  <ArrowRight className="w-5 h-5 text-slate-600 group-hover:text-red-400 group-hover:translate-x-1.5 transition-all duration-300" />
+                </div>
+              </div>
             </Link>
           ))}
         </div>
       )}
 
       {/* Outdoor Banner */}
-      {bannerEnabled && ((bannerType === "upload" && bannerBase64) || (bannerType === "url" && bannerUrl)) && (
-        <div className="px-4 pb-4 pt-2">
-          <Link to={bannerLink || "/"} className="block overflow-hidden rounded-2xl md:rounded-3xl shadow-xl border border-slate-800 relative group aspect-[3/1] bg-slate-950 w-full">
-             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
-             <img 
-               src={bannerType === "upload" ? bannerBase64 : bannerUrl} 
-               alt="Anúncio Especial" 
-               className="w-full h-full object-cover pointer-events-none select-none transition-transform duration-500 group-hover:scale-[1.02]" 
-               onContextMenu={(e) => e.preventDefault()}
-             />
-          </Link>
-        </div>
-      )}
+      {bannerEnabled &&
+        ((bannerType === "upload" && bannerBase64) ||
+          (bannerType === "url" && bannerUrl)) && (
+          <div className="px-4 pb-4 pt-2">
+            <Link
+              to={bannerLink || "/"}
+              className="block overflow-hidden rounded-2xl md:rounded-3xl shadow-xl border border-slate-800 relative group aspect-[3/1] bg-slate-950 w-full"
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
+              <img
+                src={bannerType === "upload" ? bannerBase64 : bannerUrl}
+                alt="Anúncio Especial"
+                className="w-full h-full object-cover pointer-events-none select-none transition-transform duration-500 group-hover:scale-[1.02]"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            </Link>
+          </div>
+        )}
 
       {/* Quick Navigation Cards - Compact Horizontal Scroll */}
       <div className="space-y-4 px-2">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Acesso Rápido</h3>
+          <h3 className="text-[10px] uppercase font-black text-slate-500 tracking-widest">
+            Acesso Rápido
+          </h3>
         </div>
         <div className="flex overflow-x-auto pb-2 gap-3 no-scrollbar snap-x touch-pan-x px-2">
           {cards.map((card, i) => {
@@ -542,21 +709,25 @@ export default function HomePage() {
                   onContextMenu={(e) => e.preventDefault()}
                 >
                   {cardIconSrc && (
-                    <div className={`mx-auto mb-2 w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center ${card.color || "text-yellow-500"}`}>
-                      <img 
-                        src={cardIconSrc} 
-                        alt={card.title} 
+                    <div
+                      className={`mx-auto mb-2 w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center ${card.color || "text-yellow-500"}`}
+                    >
+                      <img
+                        src={cardIconSrc || undefined}
+                        alt={card.title}
                         className="object-contain rounded animate-fade-in select-none pointer-events-none"
                         referrerPolicy="no-referrer"
                         draggable="false"
-                        style={{ 
-                          width: `${card.iconSize || 22}px`, 
-                          height: `${card.iconSize || 22}px`
+                        style={{
+                          width: `${card.iconSize || 22}px`,
+                          height: `${card.iconSize || 22}px`,
                         }}
                       />
                     </div>
                   )}
-                  <span className="text-xs uppercase tracking-wider font-bold text-white block truncate group-hover:text-green-400 select-none pointer-events-none">{card.title}</span>
+                  <span className="text-xs uppercase tracking-wider font-bold text-white block truncate group-hover:text-green-400 select-none pointer-events-none">
+                    {card.title}
+                  </span>
                 </Link>
               </motion.div>
             );
@@ -564,25 +735,164 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Top Gymnasts Ranking */}
+      {topGymnasts.length > 0 && (
+        <div className="px-4 py-8">
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-600 italic uppercase tracking-tighter">
+                Estrelas
+              </h3>
+              <p className="text-[10px] text-yellow-500/60 font-black uppercase tracking-[0.2em] mt-1">
+                Ranking por Medalhas
+              </p>
+            </div>
+            <Link
+              to="/ranking"
+              className="text-[10px] text-yellow-500 hover:text-yellow-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
+            >
+              Ver Todos <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {topGymnasts.map((gymnast) => (
+              <Link
+                key={gymnast.id}
+                to={`/gymnasts/${gymnast.id}`}
+                className={`relative overflow-hidden rounded-2xl border transition-all ${
+                  gymnast.rank === 1
+                    ? "bg-gradient-to-br from-yellow-500/10 via-slate-900 to-slate-900 border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.05)] hover:border-yellow-400/60 hover:shadow-[0_0_20px_rgba(234,179,8,0.1)]"
+                    : gymnast.rank === 2
+                      ? "bg-slate-900 border-slate-600/30 hover:border-slate-500/50"
+                      : gymnast.rank === 3
+                        ? "bg-orange-950/20 border-orange-900/30 hover:border-orange-800/50"
+                        : "bg-slate-900/40 border-slate-800/60 hover:border-slate-700"
+                } group cursor-pointer block p-4`}
+              >
+                <div className="absolute -top-4 -right-2 opacity-10 group-hover:opacity-[0.15] transition-opacity select-none pointer-events-none">
+                  <span className="font-mono text-8xl font-black italic tracking-tighter text-white">
+                    {gymnast.rank}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4 relative z-10 w-full">
+                  <div
+                    className={`relative shrink-0 rounded-full border-2 ${
+                      gymnast.rank === 1
+                        ? "border-yellow-500"
+                        : gymnast.rank === 2
+                          ? "border-slate-300"
+                          : gymnast.rank === 3
+                            ? "border-orange-500"
+                            : "border-slate-700"
+                    } w-14 h-14 overflow-hidden bg-slate-900 shadow-md flex items-center justify-center`}
+                  >
+                    {gymnast.photoURL ? (
+                      <img
+                        src={gymnast.photoURL || undefined}
+                        alt={
+                          gymnast.competitionName ||
+                          gymnast.displayName ||
+                          gymnast.username
+                        }
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-black text-xl italic text-slate-500">
+                        {(
+                          gymnast.competitionName ||
+                          gymnast.displayName ||
+                          gymnast.username ||
+                          "?"
+                        ).substring(0, 1)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0 pt-1">
+                    <p
+                      className={`text-sm sm:text-base font-black truncate leading-tight ${gymnast.rank === 1 ? "text-yellow-400" : "text-white"}`}
+                    >
+                      {gymnast.competitionName ||
+                        gymnast.displayName ||
+                        gymnast.username}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-widest truncate mt-0.5">
+                      {gymnast.team || "Independente"}
+                    </p>
+
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-sm font-black text-white">
+                          {gymnast.totalMedals}
+                        </span>
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest">
+                          Totais
+                        </span>
+                      </div>
+                      {(gymnast.gold > 0 ||
+                        gymnast.silver > 0 ||
+                        gymnast.bronze > 0) && (
+                        <div className="flex items-center gap-1.5 opacity-80">
+                          {gymnast.gold > 0 && (
+                            <span className="text-xs font-bold text-yellow-500 flex items-center gap-0.5">
+                              <span className="text-[10px]">🥇</span>
+                              {gymnast.gold}
+                            </span>
+                          )}
+                          {gymnast.silver > 0 && (
+                            <span className="text-xs font-bold text-slate-300 flex items-center gap-0.5">
+                              <span className="text-[10px]">🥈</span>
+                              {gymnast.silver}
+                            </span>
+                          )}
+                          {gymnast.bronze > 0 && (
+                            <span className="text-xs font-bold text-orange-500 flex items-center gap-0.5">
+                              <span className="text-[10px]">🥉</span>
+                              {gymnast.bronze}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Social Feed Section */}
       <div className="space-y-6 pt-4">
         <div className="flex items-center justify-between border-b border-slate-800 pb-4 px-4 sm:px-0">
-          <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">Timeline</h2>
+          <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">
+            Timeline
+          </h2>
           {userData?.tag === "Admin" && (
             <button
               onClick={() => setShowAddForm(!showAddForm)}
               className="bg-[#009c3b] hover:bg-[#007c2f] transition-colors text-white font-bold text-xs py-2 px-4 rounded-xl flex items-center gap-1.5 shadow-md shadow-[#009c3b]/10 cursor-pointer"
             >
-              {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {showAddForm ? (
+                <X className="w-4 h-4" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
               {showAddForm ? "Fechar" : "Novo Post"}
             </button>
           )}
         </div>
 
         {statusMsg && (
-          <div className={`p-4 mx-4 sm:mx-0 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
-            statusMsg.type === "success" ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"
-          }`}>
+          <div
+            className={`p-4 mx-4 sm:mx-0 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
+              statusMsg.type === "success"
+                ? "bg-green-500/10 border-green-500/20 text-green-400"
+                : "bg-red-500/10 border-red-500/20 text-red-400"
+            }`}
+          >
             <AlertCircle className="w-4 h-4" />
             <span>{statusMsg.text}</span>
           </div>
@@ -606,7 +916,11 @@ export default function HomePage() {
                   placeholder="Título do Post"
                 />
                 <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden quill-dark">
-                  <RichTextEditor value={caption} onChange={setCaption} placeholder="Mensagem ou Legenda (Commit message)..." />
+                  <RichTextEditor
+                    value={caption}
+                    onChange={setCaption}
+                    placeholder="Mensagem ou Legenda (Commit message)..."
+                  />
                 </div>
                 <input
                   type="url"
@@ -621,9 +935,16 @@ export default function HomePage() {
                     onChange={(e) => setMentionedLink(e.target.value)}
                     className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
                   >
-                    {AVAILABLE_PAGES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                    {AVAILABLE_PAGES.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
                   </select>
-                  <button type="submit" className="bg-[#009c3b] hover:bg-[#007c2f] transition-all text-white font-bold text-xs py-2 px-5 rounded-xl flex items-center gap-1 cursor-pointer">
+                  <button
+                    type="submit"
+                    className="bg-[#009c3b] hover:bg-[#007c2f] transition-all text-white font-bold text-xs py-2 px-5 rounded-xl flex items-center gap-1 cursor-pointer"
+                  >
                     <Send className="w-3 h-3" /> Publicar
                   </button>
                 </div>
@@ -635,11 +956,16 @@ export default function HomePage() {
         {/* Timeline Posts */}
         <div className="space-y-6">
           {sortedPosts.length === 0 ? (
-            <div className="text-center py-20 text-slate-500 italic text-sm">Nenhuma publicação ainda.</div>
+            <div className="text-center py-20 text-slate-500 italic text-sm">
+              Nenhuma publicação ainda.
+            </div>
           ) : (
             sortedPosts.map((post) => {
-              const isLiked = post.likes?.includes(userData?.uid || "") || false;
-              const postComments = (postCommentsMap[post.id] || []).sort((a, b) => a.createdAt - b.createdAt);
+              const isLiked =
+                post.likes?.includes(userData?.uid || "") || false;
+              const postComments = (postCommentsMap[post.id] || []).sort(
+                (a, b) => a.createdAt - b.createdAt,
+              );
               const isEditing = editingPostId === post.id;
               const showComments = !!openComments[post.id];
 
@@ -647,61 +973,122 @@ export default function HomePage() {
                 <article
                   key={post.id}
                   className={`mx-4 sm:mx-0 bg-[#070F1C] border rounded-3xl overflow-hidden shadow-xl transition-all ${
-                    post.isPinned ? "border-indigo-500/40" : "border-slate-800/60"
+                    post.isPinned
+                      ? "border-indigo-500/40"
+                      : "border-slate-800/60"
                   }`}
                 >
                   <div className="p-4 flex items-center justify-between border-b border-slate-800/40">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 shrink-0">
                         {branding?.feedLogoBase64 || branding?.feedLogoUrl ? (
-                          <img 
-                            src={branding.feedLogoBase64 || branding.feedLogoUrl} 
-                            alt="Perfl" 
-                            className="w-full h-full object-cover rounded-full border border-slate-800" 
+                          <img
+                            src={
+                              branding.feedLogoBase64 || branding.feedLogoUrl
+                            }
+                            alt="Perfl"
+                            className="w-full h-full object-cover rounded-full border border-slate-800"
                           />
                         ) : (
-                          <GymStarsLogo variant="symbol" size="sm" className="w-full h-full p-1 bg-[#050B14] rounded-full border border-slate-800" />
+                          <GymStarsLogo
+                            variant="symbol"
+                            size="sm"
+                            className="w-full h-full p-1 bg-[#050B14] rounded-full border border-slate-800"
+                          />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center gap-1">
-                          <span className="font-bold text-white text-sm uppercase">GYMSTARS BRASIL</span>
+                          <span className="font-bold text-white text-sm uppercase">
+                            GYMSTARS BRASIL
+                          </span>
                           <VerifiedBadge className="w-3.5 h-3.5 text-blue-500 inline" />
                         </div>
-                        <span className="text-neutral-500 text-[11px] block">@gymstarsbr</span>
+                        <span className="text-neutral-500 text-[11px] block">
+                          @gymstarsbr
+                        </span>
                       </div>
                     </div>
                     {userData?.tag === "Admin" && (
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setEditingPostId(isEditing ? null : post.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-900 border border-slate-800"><Edit2 className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => handleTogglePin(post)} className={`p-1.5 rounded-lg border ${post.isPinned ? "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" : "text-slate-400 bg-slate-900 border-slate-800"}`}><Pin className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => promptDeletePost(post)} className="p-1.5 rounded-lg text-red-400 bg-red-950/20 border border-red-900/30"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button
+                          onClick={() =>
+                            setEditingPostId(isEditing ? null : post.id)
+                          }
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-900 border border-slate-800"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleTogglePin(post)}
+                          className={`p-1.5 rounded-lg border ${post.isPinned ? "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" : "text-slate-400 bg-slate-900 border-slate-800"}`}
+                        >
+                          <Pin className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => promptDeletePost(post)}
+                          className="p-1.5 rounded-lg text-red-400 bg-red-950/20 border border-red-900/30"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     )}
                   </div>
 
                   {isEditing ? (
                     <div className="p-5 space-y-3 bg-black/10">
-                      <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-sm text-white" />
-                      <div className="quill-dark"><RichTextEditor value={editCaption} onChange={setEditCaption} /></div>
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-sm text-white"
+                      />
+                      <div className="quill-dark">
+                        <RichTextEditor
+                          value={editCaption}
+                          onChange={setEditCaption}
+                        />
+                      </div>
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => setEditingPostId(null)} className="bg-slate-800 text-xs px-3 py-1.5 rounded-lg">Cancelar</button>
-                        <button onClick={() => handleUpdatePost(post.id)} className="bg-[#009c3b] text-xs px-4 py-1.5 rounded-lg font-bold">Salvar</button>
+                        <button
+                          onClick={() => setEditingPostId(null)}
+                          className="bg-slate-800 text-xs px-3 py-1.5 rounded-lg"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => handleUpdatePost(post.id)}
+                          className="bg-[#009c3b] text-xs px-4 py-1.5 rounded-lg font-bold"
+                        >
+                          Salvar
+                        </button>
                       </div>
                     </div>
                   ) : (
                     <div>
                       {post.imageUrl && (
                         <div className="aspect-video bg-black/40 border-b border-slate-800/10">
-                          <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover" />
+                          <img
+                            src={post.imageUrl || undefined}
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                       )}
                       <div className="p-5 space-y-2">
-                        <h2 className="text-xl font-bold text-white tracking-tight">{post.title}</h2>
-                        <div className="text-slate-300 text-sm leading-relaxed ql-editor !px-0" dangerouslySetInnerHTML={{ __html: post.caption }} />
+                        <h2 className="text-xl font-bold text-white tracking-tight">
+                          {post.title}
+                        </h2>
+                        <div
+                          className="text-slate-300 text-sm leading-relaxed ql-editor !px-0"
+                          dangerouslySetInnerHTML={{ __html: post.caption }}
+                        />
                         {post.mentionedLink && (
                           <div className="pt-2">
-                            <Link to={post.mentionedLink} className="inline-flex items-center gap-2 bg-[#009c3b]/10 text-[#009c3b] px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105">
+                            <Link
+                              to={post.mentionedLink}
+                              className="inline-flex items-center gap-2 bg-[#009c3b]/10 text-[#009c3b] px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
+                            >
                               Explorar Página <LinkIcon className="w-3 h-3" />
                             </Link>
                           </div>
@@ -711,43 +1098,106 @@ export default function HomePage() {
                   )}
 
                   <div className="p-4 bg-slate-900/30 border-t border-slate-800/40 flex items-center gap-6 text-xs text-slate-400">
-                    <button onClick={() => handleToggleLike(post)} className={`flex items-center gap-1.5 font-bold transition-colors ${isLiked ? "text-red-500" : "hover:text-red-400"}`}>
-                      <Heart className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`} /> <span>{post.likes?.length || 0}</span>
+                    <button
+                      onClick={() => handleToggleLike(post)}
+                      className={`flex items-center gap-1.5 font-bold transition-colors ${isLiked ? "text-red-500" : "hover:text-red-400"}`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${isLiked ? "fill-red-500" : ""}`}
+                      />{" "}
+                      <span>{post.likes?.length || 0}</span>
                     </button>
-                    <button onClick={() => setOpenComments(prev => ({ ...prev, [post.id]: !prev[post.id] }))} className="flex items-center gap-1.5 font-bold hover:text-slate-200">
-                      <MessageSquare className="w-4 h-4" /> <span>{postComments.length} Comentários</span>
+                    <button
+                      onClick={() =>
+                        setOpenComments((prev) => ({
+                          ...prev,
+                          [post.id]: !prev[post.id],
+                        }))
+                      }
+                      className="flex items-center gap-1.5 font-bold hover:text-slate-200"
+                    >
+                      <MessageSquare className="w-4 h-4" />{" "}
+                      <span>{postComments.length} Comentários</span>
                     </button>
-                    <span className="text-[10px] text-slate-500 ml-auto font-mono">{new Date(post.createdAt).toLocaleDateString("pt-BR")}</span>
+                    <span className="text-[10px] text-slate-500 ml-auto font-mono">
+                      {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                    </span>
                   </div>
 
                   <AnimatePresence>
                     {showComments && (
-                      <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden bg-black/25 border-t border-slate-800/60 p-4 space-y-4">
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: "auto" }}
+                        exit={{ height: 0 }}
+                        className="overflow-hidden bg-black/25 border-t border-slate-800/60 p-4 space-y-4"
+                      >
                         <div className="flex gap-2">
                           <input
                             type="text"
                             value={commentInputs[post.id] || ""}
-                            onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                            onKeyDown={e => e.key === "Enter" && handleAddComment(post.id)}
+                            onChange={(e) =>
+                              setCommentInputs((prev) => ({
+                                ...prev,
+                                [post.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && handleAddComment(post.id)
+                            }
                             className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:border-[#009c3b] focus:outline-none"
                             placeholder="Comentar..."
                           />
-                          <button onClick={() => handleAddComment(post.id)} className="bg-slate-800 p-2 rounded-xl border border-slate-700 transition-colors hover:text-[#009c3b]"><Send className="w-3.5 h-3.5" /></button>
+                          <button
+                            onClick={() => handleAddComment(post.id)}
+                            className="bg-slate-800 p-2 rounded-xl border border-slate-700 transition-colors hover:text-[#009c3b]"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                         <div className="space-y-3">
-                          {postComments.map(c => (
-                            <div key={c.id} className="flex gap-3 items-start bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/20">
+                          {postComments.map((c) => (
+                            <div
+                              key={c.id}
+                              className="flex gap-3 items-start bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/20"
+                            >
                               <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden shrink-0 border border-slate-700">
-                                {c.userPhotoURL ? <img src={c.userPhotoURL} className="w-full h-full object-cover" alt="" /> : <div className="flex items-center justify-center h-full text-xs font-bold">@</div>}
+                                {c.userPhotoURL ? (
+                                  <img
+                                    src={c.userPhotoURL || undefined}
+                                    className="w-full h-full object-cover"
+                                    alt=""
+                                  />
+                                ) : (
+                                  <div className="flex items-center justify-center h-full text-xs font-bold">
+                                    @
+                                  </div>
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1">
-                                  <span className="font-bold text-xs text-white">@{c.username}</span>
-                                  {c.userVerified && <VerifiedBadge className="w-2.5 h-2.5 text-blue-500" />}
+                                  <span className="font-bold text-xs text-white">
+                                    @{c.username}
+                                  </span>
+                                  {c.userVerified && (
+                                    <VerifiedBadge className="w-2.5 h-2.5 text-blue-500" />
+                                  )}
                                 </div>
-                                <p className="text-slate-300 text-xs mt-1">{c.text}</p>
+                                <p className="text-slate-300 text-xs mt-1">
+                                  {c.text}
+                                </p>
                               </div>
-                              {(userData?.uid === c.userId || userData?.tag === "Admin") && <button onClick={() => promptDeleteComment(c.id, c.text, post.id)} className="text-slate-600 hover:text-red-400 p-1"><Trash2 className="w-3 h-3" /></button>}
+                              {(userData?.uid === c.userId ||
+                                userData?.tag === "Admin") && (
+                                <button
+                                  onClick={() =>
+                                    promptDeleteComment(c.id, c.text, post.id)
+                                  }
+                                  className="text-slate-600 hover:text-red-400 p-1"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -764,13 +1214,38 @@ export default function HomePage() {
       {/* Confirmation Modal */}
       <AnimatePresence>
         {deleteConfirmationState && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
             <div className="bg-[#050D19] border border-slate-800 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
               <h3 className="font-bold text-white">Confirmar Exclusão?</h3>
-              <p className="text-xs text-slate-400 italic">"{deleteConfirmationState.displayName}"</p>
+              <p className="text-xs text-slate-400 italic">
+                "{deleteConfirmationState.displayName}"
+              </p>
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setDeleteConfirmationState(null)} className="bg-slate-900 px-4 py-2 rounded-xl text-xs font-bold text-slate-400">Cancelar</button>
-                <button onClick={() => { if(deleteConfirmationState.type === "post") handleDeletePost(deleteConfirmationState.id); else handleDeleteComment(deleteConfirmationState.id, deleteConfirmationState.postId!); }} className="bg-red-600 px-4 py-2 rounded-xl text-xs font-bold text-white">Excluir</button>
+                <button
+                  onClick={() => setDeleteConfirmationState(null)}
+                  className="bg-slate-900 px-4 py-2 rounded-xl text-xs font-bold text-slate-400"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (deleteConfirmationState.type === "post")
+                      handleDeletePost(deleteConfirmationState.id);
+                    else
+                      handleDeleteComment(
+                        deleteConfirmationState.id,
+                        deleteConfirmationState.postId!,
+                      );
+                  }}
+                  className="bg-red-600 px-4 py-2 rounded-xl text-xs font-bold text-white"
+                >
+                  Excluir
+                </button>
               </div>
             </div>
           </motion.div>

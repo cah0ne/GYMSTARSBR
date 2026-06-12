@@ -11,7 +11,9 @@ import { Bell } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export default function NotificationsTicker() {
-  const [activeNotification, setActiveNotification] = useState<any | null>(null);
+  const [activeNotification, setActiveNotification] = useState<any | null>(
+    null,
+  );
   const lastSeenIdRef = useRef<string | null>(null);
 
   useEffect(() => {

@@ -156,7 +156,9 @@ export default function CodePage() {
             className="bg-slate-900 border border-slate-800 p-6 rounded-2xl"
           >
             <div className="flex justify-between items-start gap-4 mb-2">
-              <h2 className="text-2xl font-bold text-white break-words">{item.title}</h2>
+              <h2 className="text-2xl font-bold text-white break-words">
+                {item.title}
+              </h2>
               {isAdmin && (
                 <div className="flex items-center gap-2 shrink-0">
                   <button
@@ -181,7 +183,7 @@ export default function CodePage() {
             <p className="text-slate-400 whitespace-pre-wrap">{item.text}</p>
             {item.photoUrl && (
               <img
-                src={item.photoUrl}
+                src={item.photoUrl || undefined}
                 alt="Visual"
                 className="mt-4 rounded-lg max-h-64 object-cover"
               />
@@ -213,7 +215,9 @@ export default function CodePage() {
             className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl flex-shrink-0 break-words shadow-2xl space-y-4"
             style={{ width: "90%", maxWidth: "450px" }}
           >
-            <h2 className="text-xl font-bold mb-4">{editingItemId ? "Editar Código" : "Adicionar Código"}</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {editingItemId ? "Editar Código" : "Adicionar Código"}
+            </h2>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-sm text-neutral-400 mb-1">

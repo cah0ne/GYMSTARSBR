@@ -14,21 +14,21 @@ import {
   getDoc,
   getDocs,
 } from "../lib/firebase";
-import { 
-  ShieldCheck, 
-  UserCog, 
-  Upload, 
-  Trash2, 
-  Plus, 
-  ArrowUp, 
-  ArrowDown, 
-  Sparkles, 
-  Smile, 
-  RotateCcw, 
-  Link2, 
-  Check, 
-  Settings2, 
-  Image, 
+import {
+  ShieldCheck,
+  UserCog,
+  Upload,
+  Trash2,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  Sparkles,
+  Smile,
+  RotateCcw,
+  Link2,
+  Check,
+  Settings2,
+  Image,
   HelpCircle,
   FileImage,
   Trophy,
@@ -51,7 +51,7 @@ import {
   Volume2,
   LayoutDashboard,
   ChevronDown,
-  FileText
+  FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { UserData } from "../App";
@@ -66,30 +66,67 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [globalSfxUrl, setGlobalSfxUrl] = useState("");
   const [teams, setTeams] = useState<any[]>([]);
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const [activeTab, setActiveTab] = useState("accounts");
   const [searchQuery, setSearchQuery] = useState("");
 
   const menuItems = [
-    { id: "accounts", label: "Contas", icon: UserCog, desc: "Cargos, nomes e senhas" },
-    { id: "teams", label: "Equipes", icon: Shield, desc: "Criar e organizar equipes" },
-    { id: "badges", label: "Emblemas", icon: Award, desc: "Atribuir conquistas" },
-    { id: "courses", label: "Cursos", icon: GraduationCap, desc: "Gerenciar os cursos do site" },
-    { id: "branding", label: "Personalização", icon: LayoutDashboard, desc: "Home, Logos e Quem Somos" },
-    { id: "sound", label: "Sons", icon: Volume2, desc: "SFX Global do Sistema" },
+    {
+      id: "accounts",
+      label: "Contas",
+      icon: UserCog,
+      desc: "Cargos, nomes e senhas",
+    },
+    {
+      id: "teams",
+      label: "Equipes",
+      icon: Shield,
+      desc: "Criar e organizar equipes",
+    },
+    {
+      id: "badges",
+      label: "Emblemas",
+      icon: Award,
+      desc: "Atribuir conquistas",
+    },
+    {
+      id: "courses",
+      label: "Cursos",
+      icon: GraduationCap,
+      desc: "Gerenciar os cursos do site",
+    },
+    {
+      id: "branding",
+      label: "Personalização",
+      icon: LayoutDashboard,
+      desc: "Home, Logos e Quem Somos",
+    },
+    {
+      id: "sound",
+      label: "Sons",
+      icon: Volume2,
+      desc: "SFX Global do Sistema",
+    },
   ];
 
-  const filteredUsers = users.filter(u => 
-    u.username?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    u.competitionName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = users.filter(
+    (u) =>
+      u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.competitionName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   useEffect(() => {
-    const unsub = onSnapshot(query(collection(db, "appContent"), where("type", "==", "team")), (snap) => {
-      setTeams(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsub = onSnapshot(
+      query(collection(db, "appContent"), where("type", "==", "team")),
+      (snap) => {
+        setTeams(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+    );
     return () => unsub();
   }, []);
 
@@ -119,8 +156,15 @@ export default function AdminPage() {
   const saveGlobalSfx = async () => {
     setIsSavingSfx(true);
     try {
-      await setDoc(doc(db, "settings", "global"), { sfxUrl: globalSfxUrl }, { merge: true });
-      setStatusMsg({ text: "Link do efeito sonoro salvo com sucesso!", type: "success" });
+      await setDoc(
+        doc(db, "settings", "global"),
+        { sfxUrl: globalSfxUrl },
+        { merge: true },
+      );
+      setStatusMsg({
+        text: "Link do efeito sonoro salvo com sucesso!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
     } catch (err: any) {
       setStatusMsg({ text: "Erro ao salvar: " + err.message, type: "error" });
@@ -141,8 +185,11 @@ export default function AdminPage() {
       url = url.replace(/dl=[012]/, "raw=1");
     }
     const audio = new Audio(url);
-    audio.play().catch(e => {
-      setStatusMsg({ text: "Erro ao tocar áudio. Verifique se o link é válido: " + e.message, type: "error" });
+    audio.play().catch((e) => {
+      setStatusMsg({
+        text: "Erro ao tocar áudio. Verifique se o link é válido: " + e.message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
     });
   };
@@ -172,177 +219,217 @@ export default function AdminPage() {
 
       {statusMsg && (
         <div className="fixed bottom-10 right-10 z-[100] animate-in fade-in slide-in-from-bottom-5">
-           <div className={`p-4 rounded-2xl flex items-center gap-4 text-sm font-bold shadow-[0_20px_50px_rgba(0,0,0,0.5)] border ${
-             statusMsg.type === "success" 
-               ? "bg-slate-900 border-green-500/30 text-green-400" 
-               : "bg-slate-900 border-red-500/30 text-red-400"
-           }`}>
-             <div className={`w-3 h-3 rounded-full ${statusMsg.type === "success" ? "bg-green-500 shadow-[0_0_10px_#22c55e]" : "bg-red-500 shadow-[0_0_10px_#ef4444]"} shrink-0`} />
-             <span className="pr-4">{statusMsg.text}</span>
-             <button onClick={() => setStatusMsg(null)} className="text-slate-500 hover:text-white transition-colors">✕</button>
-           </div>
+          <div
+            className={`p-4 rounded-2xl flex items-center gap-4 text-sm font-bold shadow-[0_20px_50px_rgba(0,0,0,0.5)] border ${
+              statusMsg.type === "success"
+                ? "bg-slate-900 border-green-500/30 text-green-400"
+                : "bg-slate-900 border-red-500/30 text-red-400"
+            }`}
+          >
+            <div
+              className={`w-3 h-3 rounded-full ${statusMsg.type === "success" ? "bg-green-500 shadow-[0_0_10px_#22c55e]" : "bg-red-500 shadow-[0_0_10px_#ef4444]"} shrink-0`}
+            />
+            <span className="pr-4">{statusMsg.text}</span>
+            <button
+              onClick={() => setStatusMsg(null)}
+              className="text-slate-500 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Sidebar Navigation */}
         <aside className="w-full lg:w-72 shrink-0 space-y-2">
-           <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-4">Menu de Gestão</div>
-           <nav className="space-y-1.5 font-sans">
-              {menuItems.map((item) => (
-                 <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
+          <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 ml-4">
+            Menu de Gestão
+          </div>
+          <nav className="space-y-1.5 font-sans">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={clsx(
+                  "w-full flex items-center gap-4 p-4 rounded-3xl border transition-all text-left group",
+                  activeTab === item.id
+                    ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-white shadow-lg shadow-black/20"
+                    : "bg-[#0A1221] border-slate-800/50 text-slate-500 hover:bg-slate-800 hover:border-slate-700",
+                )}
+              >
+                <div
+                  className={clsx(
+                    "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-all",
+                    activeTab === item.id
+                      ? "bg-[#009c3b] text-white"
+                      : "bg-slate-900 text-slate-600 group-hover:text-slate-300",
+                  )}
+                >
+                  <item.icon className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div
                     className={clsx(
-                       "w-full flex items-center gap-4 p-4 rounded-3xl border transition-all text-left group",
-                       activeTab === item.id 
-                          ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-white shadow-lg shadow-black/20" 
-                          : "bg-[#0A1221] border-slate-800/50 text-slate-500 hover:bg-slate-800 hover:border-slate-700"
+                      "font-black text-xs uppercase tracking-wider",
+                      activeTab === item.id ? "text-white" : "text-slate-400",
                     )}
-                 >
-                    <div className={clsx(
-                       "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-all",
-                       activeTab === item.id 
-                          ? "bg-[#009c3b] text-white" 
-                          : "bg-slate-900 text-slate-600 group-hover:text-slate-300"
-                    )}>
-                       <item.icon className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                       <div className={clsx(
-                          "font-black text-xs uppercase tracking-wider",
-                          activeTab === item.id ? "text-white" : "text-slate-400"
-                       )}>{item.label}</div>
-                       <div className="text-[9px] truncate opacity-60 font-medium">{item.desc}</div>
-                    </div>
-                 </button>
-              ))}
-           </nav>
+                  >
+                    {item.label}
+                  </div>
+                  <div className="text-[9px] truncate opacity-60 font-medium">
+                    {item.desc}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </nav>
         </aside>
 
         {/* Main Content Area */}
         <main className="flex-1 min-w-0 w-full">
-           <AnimatePresence mode="wait">
-              <motion.div
-                 key={activeTab}
-                 initial={{ opacity: 0, y: 10 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 exit={{ opacity: 0, y: -10 }}
-                 transition={{ duration: 0.2 }}
-                 className="space-y-6"
-              >
-                 {activeTab === 'accounts' && (
-                    <div className="space-y-6">
-                       <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#0A1221] border border-slate-800 p-4 rounded-3xl">
-                          <div className="w-full relative flex items-center">
-                             <Search className="absolute left-4 w-5 h-5 text-slate-500" />
-                             <input 
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Buscar contas por nome, e-mail ou @usuário..."
-                                className="w-full bg-black/40 border border-slate-800 rounded-2xl pl-12 pr-4 py-4 text-white focus:border-[#009c3b] transition-all outline-none text-sm font-sans"
-                             />
-                             {searchQuery && (
-                                <button onClick={() => setSearchQuery("")} className="absolute right-4 text-slate-500 hover:text-white">✕</button>
-                             )}
-                          </div>
-                          <div className="shrink-0 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4">
-                             {filteredUsers.length} total
-                          </div>
-                       </div>
-                       
-                       <div className="space-y-3">
-                          {loading ? (
-                             <div className="py-20 flex flex-col items-center gap-4 bg-[#0A1221] border border-slate-800 rounded-[2.5rem]">
-                                <Play className="w-8 h-8 text-[#009c3b] animate-pulse" />
-                                <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Sincronizando Banco de Dados...</span>
-                             </div>
-                          ) : filteredUsers.length === 0 ? (
-                             <div className="py-20 flex flex-col items-center gap-4 bg-[#0A1221] border border-slate-800 rounded-[2.5rem] text-center">
-                                <Search className="w-10 h-10 text-slate-800 mb-2" />
-                                <p className="text-slate-500 text-sm font-medium">Nenhum resultado para "{searchQuery}"</p>
-                                <button onClick={() => setSearchQuery("")} className="text-[#009c3b] text-xs font-black uppercase tracking-widest hover:underline">Limpar Filtros</button>
-                             </div>
-                          ) : (
-                             filteredUsers.map((u, i) => (
-                                <motion.div
-                                   key={u.id || i}
-                                   initial={{ opacity: 0, y: 5 }}
-                                   animate={{ opacity: 1, y: 0 }}
-                                   transition={{ delay: Math.min(i * 0.03, 0.5) }}
-                                >
-                                   <AdminUserRow user={u} teams={teams} />
-                                </motion.div>
-                             ))
-                          )}
-                       </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-6"
+            >
+              {activeTab === "accounts" && (
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 bg-[#0A1221] border border-slate-800 p-4 rounded-3xl">
+                    <div className="w-full relative flex items-center">
+                      <Search className="absolute left-4 w-5 h-5 text-slate-500" />
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Buscar contas por nome, e-mail ou @usuário..."
+                        className="w-full bg-black/40 border border-slate-800 rounded-2xl pl-12 pr-4 py-4 text-white focus:border-[#009c3b] transition-all outline-none text-sm font-sans"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-4 text-slate-500 hover:text-white"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
-                 )}
-
-                 {activeTab === 'teams' && <TeamsManager teams={teams} />}
-
-                 {activeTab === 'badges' && <BadgesManager users={users} />}
-
-                 {activeTab === 'courses' && <CoursesManager />}
-
-                 {activeTab === 'branding' && (
-                    <div className="space-y-8">
-                       <HomepageContentManager />
-                       <AppBrandingManager />
-                       <AboutUsManager />
+                    <div className="shrink-0 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4">
+                      {filteredUsers.length} total
                     </div>
-                 )}
+                  </div>
 
-                 {activeTab === 'sound' && (
-                    <div className="bg-[#0A1221] border border-slate-800 p-8 rounded-[2.5rem] space-y-8">
-                       <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                          <div className="bg-indigo-500/10 p-3 rounded-2xl">
-                             <Volume2 className="w-8 h-8 text-indigo-500" />
-                          </div>
-                          <div>
-                             <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">Efeitos Sonoros do Sistema</h2>
-                             <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-0.5">Configurações Globais de Áudio</p>
-                          </div>
-                       </div>
+                  <div className="space-y-3">
+                    {loading ? (
+                      <div className="py-20 flex flex-col items-center gap-4 bg-[#0A1221] border border-slate-800 rounded-[2.5rem]">
+                        <Play className="w-8 h-8 text-[#009c3b] animate-pulse" />
+                        <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
+                          Sincronizando Banco de Dados...
+                        </span>
+                      </div>
+                    ) : filteredUsers.length === 0 ? (
+                      <div className="py-20 flex flex-col items-center gap-4 bg-[#0A1221] border border-slate-800 rounded-[2.5rem] text-center">
+                        <Search className="w-10 h-10 text-slate-800 mb-2" />
+                        <p className="text-slate-500 text-sm font-medium">
+                          Nenhum resultado para "{searchQuery}"
+                        </p>
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="text-[#009c3b] text-xs font-black uppercase tracking-widest hover:underline"
+                        >
+                          Limpar Filtros
+                        </button>
+                      </div>
+                    ) : (
+                      filteredUsers.map((u, i) => (
+                        <motion.div
+                          key={u.id || i}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(i * 0.03, 0.5) }}
+                        >
+                          <AdminUserRow user={u} teams={teams} />
+                        </motion.div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
 
-                       <div className="space-y-6">
-                          <div className="space-y-3">
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
-                               SFX de Arbitragem (Som tocado ao fechar janela de notas)
-                            </label>
-                            <div className="relative group">
-                               <Play className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500 opacity-50 group-focus-within:opacity-100 transition-opacity" />
-                               <input
-                                 type="url"
-                                 value={globalSfxUrl}
-                                 onChange={(e) => setGlobalSfxUrl(e.target.value)}
-                                 className="w-full bg-black/40 border border-slate-800 rounded-2xl pl-12 pr-4 py-5 text-white text-sm focus:border-indigo-500 focus:outline-none transition-all placeholder:text-slate-700"
-                                 placeholder="https://exemplo.com/efeito.mp3"
-                               />
-                            </div>
-                            <p className="text-[10px] text-slate-600 italic px-2">Dica: Links do Dropbox devem terminar em ?raw=1 ou ser convertidos automaticamente pelo sistema.</p>
-                          </div>
+              {activeTab === "teams" && <TeamsManager teams={teams} />}
 
-                          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                             <button
-                                onClick={testAudio}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest px-8 py-5 rounded-2xl text-xs transition-all border border-slate-700 active:scale-95"
-                             >
-                                Testar Som Agora
-                             </button>
-                             <button
-                                onClick={saveGlobalSfx}
-                                disabled={isSavingSfx || !globalSfxUrl}
-                                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-[0.2em] px-8 py-5 rounded-2xl text-xs transition-all shadow-xl shadow-indigo-900/40 disabled:opacity-30 active:scale-95"
-                             >
-                                {isSavingSfx ? "Salvando..." : "Salvar Configuração"}
-                             </button>
-                          </div>
-                       </div>
+              {activeTab === "badges" && <BadgesManager users={users} />}
+
+              {activeTab === "courses" && <CoursesManager />}
+
+              {activeTab === "branding" && (
+                <div className="space-y-8">
+                  <HomepageContentManager />
+                  <AppBrandingManager />
+                  <AboutUsManager />
+                </div>
+              )}
+
+              {activeTab === "sound" && (
+                <div className="bg-[#0A1221] border border-slate-800 p-8 rounded-[2.5rem] space-y-8">
+                  <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+                    <div className="bg-indigo-500/10 p-3 rounded-2xl">
+                      <Volume2 className="w-8 h-8 text-indigo-500" />
                     </div>
-                 )}
-              </motion.div>
-           </AnimatePresence>
+                    <div>
+                      <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">
+                        Efeitos Sonoros do Sistema
+                      </h2>
+                      <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-0.5">
+                        Configurações Globais de Áudio
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+                        SFX de Arbitragem (Som tocado ao fechar janela de notas)
+                      </label>
+                      <div className="relative group">
+                        <Play className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500 opacity-50 group-focus-within:opacity-100 transition-opacity" />
+                        <input
+                          type="url"
+                          value={globalSfxUrl}
+                          onChange={(e) => setGlobalSfxUrl(e.target.value)}
+                          className="w-full bg-black/40 border border-slate-800 rounded-2xl pl-12 pr-4 py-5 text-white text-sm focus:border-indigo-500 focus:outline-none transition-all placeholder:text-slate-700"
+                          placeholder="https://exemplo.com/efeito.mp3"
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-600 italic px-2">
+                        Dica: Links do Dropbox devem terminar em ?raw=1 ou ser
+                        convertidos automaticamente pelo sistema.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                      <button
+                        onClick={testAudio}
+                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-black uppercase tracking-widest px-8 py-5 rounded-2xl text-xs transition-all border border-slate-700 active:scale-95"
+                      >
+                        Testar Som Agora
+                      </button>
+                      <button
+                        onClick={saveGlobalSfx}
+                        disabled={isSavingSfx || !globalSfxUrl}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-[0.2em] px-8 py-5 rounded-2xl text-xs transition-all shadow-xl shadow-indigo-900/40 disabled:opacity-30 active:scale-95"
+                      >
+                        {isSavingSfx ? "Salvando..." : "Salvar Configuração"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>
@@ -355,19 +442,25 @@ function BadgesManager({ users }: { users: any[] }) {
   const [badgeImage, setBadgeImage] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
-  
+
   // Assignment state
   const [selectedBadge, setSelectedBadge] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<string>("Toda");
-  const [assignmentMode, setAssignmentMode] = useState<"individual" | "bulk">("individual");
+  const [assignmentMode, setAssignmentMode] = useState<"individual" | "bulk">(
+    "individual",
+  );
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [assignMessage, setAssignMessage] = useState("");
-  
+
   useEffect(() => {
-    const q = query(collection(db, "appContent"), where("type", "==", "badge"), orderBy("createdAt", "desc"));
+    const q = query(
+      collection(db, "appContent"),
+      where("type", "==", "badge"),
+      orderBy("createdAt", "desc"),
+    );
     const unsub = onSnapshot(q, (snap) => {
-      setBadges(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setBadges(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
     return () => unsub();
   }, []);
@@ -380,7 +473,7 @@ function BadgesManager({ users }: { users: any[] }) {
         type: "badge",
         name: badgeName,
         imageUrl: badgeImage,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       });
       setBadgeName("");
       setBadgeImage("");
@@ -414,57 +507,70 @@ function BadgesManager({ users }: { users: any[] }) {
   const handleAssign = async () => {
     if (!selectedBadge) return;
     setIsAssigning(true);
-    
+
     try {
       const badgeData = {
         id: selectedBadge.id,
         name: selectedBadge.name,
-        imageUrl: selectedBadge.imageUrl
+        imageUrl: selectedBadge.imageUrl,
       };
 
       if (assignmentMode === "bulk") {
-        const targetUsers = users.filter(u => selectedTag === "Toda" || u.tag === selectedTag || (selectedTag.startsWith("Team:") && u.team === selectedTag.split(":")[1]));
-        
+        const targetUsers = users.filter(
+          (u) =>
+            selectedTag === "Toda" ||
+            u.tag === selectedTag ||
+            (selectedTag.startsWith("Team:") &&
+              u.team === selectedTag.split(":")[1]),
+        );
+
         for (const u of targetUsers) {
           const currentBadges = u.badges || [];
           if (!currentBadges.some((b: any) => b.id === selectedBadge.id)) {
             await updateDoc(doc(db, "users", u.id), {
-              badges: [...currentBadges, badgeData]
+              badges: [...currentBadges, badgeData],
             });
           }
         }
 
         // Single global notification for bulk
-        const groupLabel = selectedTag === "Toda" ? "Todos os usuários" : `As pessoas com a TAG ${selectedTag}`;
+        const groupLabel =
+          selectedTag === "Toda"
+            ? "Todos os usuários"
+            : `As pessoas com a TAG ${selectedTag}`;
         await addDoc(collection(db, "notifications"), {
           title: "Conquista Coletiva!",
-          message: assignMessage || `${groupLabel} receberam o emblema: ${selectedBadge.name}!`,
+          message:
+            assignMessage ||
+            `${groupLabel} receberam o emblema: ${selectedBadge.name}!`,
           type: "success",
-          createdAt: Date.now()
+          createdAt: Date.now(),
         });
       } else {
         // Individual
         for (const uid of selectedUserIds) {
-          const user = users.find(u => u.id === uid);
+          const user = users.find((u) => u.id === uid);
           if (user) {
             const currentBadges = user.badges || [];
             if (!currentBadges.some((b: any) => b.id === selectedBadge.id)) {
               await updateDoc(doc(db, "users", uid), {
-                badges: [...currentBadges, badgeData]
+                badges: [...currentBadges, badgeData],
               });
-              
+
               // Individual notification
               await addDoc(collection(db, "notifications"), {
                 title: "Novo Emblema Conquistado!",
-                message: assignMessage || `${user.competitionName || user.username} recebeu o emblema: ${selectedBadge.name}!`,
+                message:
+                  assignMessage ||
+                  `${user.competitionName || user.username} recebeu o emblema: ${selectedBadge.name}!`,
                 type: "success",
-                createdAt: Date.now()
+                createdAt: Date.now(),
               });
             }
           }
         }
       }
-      
+
       setSelectedUserIds([]);
       setSelectedBadge(null);
       setAssignMessage("");
@@ -477,10 +583,14 @@ function BadgesManager({ users }: { users: any[] }) {
     }
   };
 
-  const filteredAssignUsers = users.filter(u => {
-    const matchesSearch = u.username?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         u.competitionName?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = selectedTag === "Toda" || u.tag === selectedTag || (selectedTag.startsWith("Team:") && u.team === selectedTag.split(":")[1]);
+  const filteredAssignUsers = users.filter((u) => {
+    const matchesSearch =
+      u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.competitionName?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTag =
+      selectedTag === "Toda" ||
+      u.tag === selectedTag ||
+      (selectedTag.startsWith("Team:") && u.team === selectedTag.split(":")[1]);
     return matchesSearch && matchesTag;
   });
 
@@ -493,56 +603,80 @@ function BadgesManager({ users }: { users: any[] }) {
             <Plus className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">Criar Novo Emblema</h3>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Adicione conquistas exclusivas para a biblioteca</p>
+            <h3 className="text-lg font-black text-white italic uppercase tracking-tighter">
+              Criar Novo Emblema
+            </h3>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+              Adicione conquistas exclusivas para a biblioteca
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nome do Emblema</label>
-              <input 
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                Nome do Emblema
+              </label>
+              <input
                 value={badgeName}
-                onChange={e => setBadgeName(e.target.value)}
+                onChange={(e) => setBadgeName(e.target.value)}
                 placeholder="Ex: Campeã Estadual 2024"
                 className="w-full bg-black/40 border border-slate-800 rounded-2xl px-4 py-4 text-white text-sm focus:border-[#009c3b] outline-none"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Upload da Imagem (PNG)</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                Upload da Imagem (PNG)
+              </label>
               <label className="flex items-center gap-4 bg-black/20 border border-slate-800 rounded-2xl p-4 cursor-pointer hover:bg-black/40 transition-colors group">
                 <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-slate-500 group-hover:text-[#009c3b] group-hover:border-[#009c3b]/50 transition-all">
                   <Upload className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-xs font-bold text-white">Selecionar arquivo PNG</div>
-                  <div className="text-[10px] text-slate-500 font-medium">Fundo transparente recomendado</div>
+                  <div className="text-xs font-bold text-white">
+                    Selecionar arquivo PNG
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium">
+                    Fundo transparente recomendado
+                  </div>
                 </div>
-                <input type="file" accept="image/png" onChange={handleFileUpload} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/png"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </label>
             </div>
 
             <button
-               onClick={handleCreateBadge}
-               disabled={isCreating || !badgeName || !badgeImage}
-               className="w-full bg-[#009c3b] hover:bg-[#009c3b]/90 text-white font-black uppercase tracking-[0.2em] text-xs py-4 rounded-2xl transition-all disabled:opacity-30 disabled:grayscale active:scale-[0.98]"
+              onClick={handleCreateBadge}
+              disabled={isCreating || !badgeName || !badgeImage}
+              className="w-full bg-[#009c3b] hover:bg-[#009c3b]/90 text-white font-black uppercase tracking-[0.2em] text-xs py-4 rounded-2xl transition-all disabled:opacity-30 disabled:grayscale active:scale-[0.98]"
             >
-               {isCreating ? "Criando..." : "Registrar Emblema"}
+              {isCreating ? "Criando..." : "Registrar Emblema"}
             </button>
           </div>
 
           <div className="flex flex-col items-center justify-center p-8 bg-black/20 border border-slate-800 rounded-[2rem] border-dashed">
             {badgeImage ? (
               <div className="flex flex-col items-center gap-4">
-                <img src={badgeImage} className="w-32 h-32 object-contain" />
-                <span className="text-[10px] font-black text-[#009c3b] uppercase tracking-[0.2em] animate-pulse">Prévia do Emblema</span>
+                <img
+                  src={badgeImage || undefined}
+                  className="w-32 h-32 object-contain"
+                />
+                <span className="text-[10px] font-black text-[#009c3b] uppercase tracking-[0.2em] animate-pulse">
+                  Prévia do Emblema
+                </span>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2 opacity-20">
                 <Award className="w-16 h-16 text-slate-500" />
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Nada selecionado</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  Nada selecionado
+                </span>
               </div>
             )}
           </div>
@@ -553,203 +687,282 @@ function BadgesManager({ users }: { users: any[] }) {
       <section className="space-y-4">
         <div className="flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
-             <Trophy className="w-5 h-5 text-amber-500" />
-             <h3 className="text-sm font-black text-white uppercase tracking-widest">Biblioteca de Emblemas ({badges.length})</h3>
+            <Trophy className="w-5 h-5 text-amber-500" />
+            <h3 className="text-sm font-black text-white uppercase tracking-widest">
+              Biblioteca de Emblemas ({badges.length})
+            </h3>
           </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-           {badges.map(badge => (
+          {badges.map((badge) => (
+            <button
+              key={badge.id}
+              onClick={() => setSelectedBadge(badge)}
+              className={clsx(
+                "relative group bg-[#0A1221] border p-6 rounded-[2rem] flex flex-col items-center gap-3 transition-all active:scale-95",
+                selectedBadge?.id === badge.id
+                  ? "border-amber-500 bg-amber-500/5 ring-4 ring-amber-500/10 scale-[1.02]"
+                  : "border-slate-800 hover:border-slate-700",
+              )}
+            >
               <button
-                key={badge.id}
-                onClick={() => setSelectedBadge(badge)}
-                className={clsx(
-                  "relative group bg-[#0A1221] border p-6 rounded-[2rem] flex flex-col items-center gap-3 transition-all active:scale-95",
-                  selectedBadge?.id === badge.id 
-                    ? "border-amber-500 bg-amber-500/5 ring-4 ring-amber-500/10 scale-[1.02]" 
-                    : "border-slate-800 hover:border-slate-700"
-                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteBadge(badge.id);
+                }}
+                className="absolute top-2 right-2 p-2 text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleDeleteBadge(badge.id); }}
-                  className="absolute top-2 right-2 p-2 text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                
-                <img src={badge.imageUrl} className="w-16 h-16 object-contain" />
-                <div className="text-center">
-                   <div className="text-[10px] font-black text-white uppercase tracking-tighter truncate w-full max-w-[100px]">{badge.name}</div>
-                </div>
+                <Trash2 className="w-4 h-4" />
               </button>
-           ))}
-           {badges.length === 0 && (
-             <div className="col-span-full py-12 bg-[#0A1221] border border-slate-800 border-dashed rounded-[2rem] text-center text-slate-500 text-xs font-black uppercase tracking-widest">
-                A biblioteca está vazia
-             </div>
-           )}
+
+              <img
+                src={badge.imageUrl || undefined}
+                className="w-16 h-16 object-contain"
+              />
+              <div className="text-center">
+                <div className="text-[10px] font-black text-white uppercase tracking-tighter truncate w-full max-w-[100px]">
+                  {badge.name}
+                </div>
+              </div>
+            </button>
+          ))}
+          {badges.length === 0 && (
+            <div className="col-span-full py-12 bg-[#0A1221] border border-slate-800 border-dashed rounded-[2rem] text-center text-slate-500 text-xs font-black uppercase tracking-widest">
+              A biblioteca está vazia
+            </div>
+          )}
         </div>
       </section>
 
       {/* Assigner Section */}
       <AnimatePresence>
-         {selectedBadge && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-[#0A1221] border border-amber-500/30 p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden shadow-2xl shadow-green-950/20"
-            >
-              <div className="absolute top-0 right-0 p-8 transform translate-x-1/4 -translate-y-1/4 opacity-10">
-                 <img src={selectedBadge.imageUrl} className="w-64 h-64 grayscale" />
+        {selectedBadge && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#0A1221] border border-amber-500/30 p-6 sm:p-8 rounded-[2.5rem] relative overflow-hidden shadow-2xl shadow-green-950/20"
+          >
+            <div className="absolute top-0 right-0 p-8 transform translate-x-1/4 -translate-y-1/4 opacity-10">
+              <img
+                src={selectedBadge.imageUrl || undefined}
+                className="w-64 h-64 grayscale"
+              />
+            </div>
+
+            <div className="relative z-10 flex flex-col lg:flex-row gap-8">
+              <div className="lg:w-80 shrink-0 space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-black/40 border border-slate-800 rounded-2xl flex items-center justify-center p-3">
+                    <img
+                      src={selectedBadge.imageUrl || undefined}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
+                      Emblema Selecionado
+                    </div>
+                    <div className="text-xl font-black text-white italic uppercase tracking-tighter">
+                      {selectedBadge.name}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-white/5">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                      Modo de Atribuição
+                    </label>
+                    <div className="flex bg-black/40 p-1 rounded-2xl border border-slate-800">
+                      <button
+                        onClick={() => setAssignmentMode("individual")}
+                        className={clsx(
+                          "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                          assignmentMode === "individual"
+                            ? "bg-amber-500 text-black shadow-lg"
+                            : "text-slate-500",
+                        )}
+                      >
+                        Individual
+                      </button>
+                      <button
+                        onClick={() => setAssignmentMode("bulk")}
+                        className={clsx(
+                          "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                          assignmentMode === "bulk"
+                            ? "bg-amber-500 text-black shadow-lg"
+                            : "text-slate-500",
+                        )}
+                      >
+                        Em Massa
+                      </button>
+                    </div>
+                  </div>
+
+                  {assignmentMode === "bulk" ? (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                        Alvo do Envio
+                      </label>
+                      <select
+                        value={selectedTag}
+                        onChange={(e) => setSelectedTag(e.target.value)}
+                        className="w-full bg-black border border-slate-800 rounded-2xl px-4 py-4 text-white text-xs font-black uppercase tracking-widest focus:border-amber-500 outline-none"
+                      >
+                        <option value="Toda">Toda a Plataforma</option>
+                        <option value="Ginasta">Apenas Ginastas</option>
+                        <option value="Admin">Apenas Admins</option>
+                        <option value="Árbitro">Apenas Árbitros</option>
+                        <option value="Visitante">Apenas Visitantes</option>
+                        <optgroup label="Filtrar por Equipe">
+                          {Array.from(
+                            new Set(
+                              users.filter((u) => u.team).map((u) => u.team),
+                            ),
+                          ).map((team) => (
+                            <option key={team} value={`Team:${team}`}>
+                              Equipe: {team}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                      <div className="text-xs font-bold text-amber-500 mb-1">
+                        Dica Individual
+                      </div>
+                      <p className="text-[10px] text-amber-500/60 font-medium">
+                        Selecione as pessoas na lista ao lado.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                      Mensagem do Envio (Commit message)
+                    </label>
+                    <textarea
+                      value={assignMessage}
+                      onChange={(e) => setAssignMessage(e.target.value)}
+                      placeholder="Ex: Parabéns pela dedicação! (Opcional)"
+                      className="w-full bg-black/40 border border-slate-800 rounded-2xl px-4 py-3 text-white text-xs outline-none focus:border-amber-500 transition-all font-sans h-20 resize-none"
+                    />
+                  </div>
+
+                  <div className="pt-4 flex flex-col gap-3">
+                    <button
+                      onClick={handleAssign}
+                      disabled={
+                        isAssigning ||
+                        (assignmentMode === "individual" &&
+                          selectedUserIds.length === 0)
+                      }
+                      className="w-full bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl transition-all shadow-xl shadow-amber-900/20 active:scale-95 disabled:opacity-30 disabled:active:scale-100 flex items-center justify-center gap-3"
+                    >
+                      <Award className="w-4 h-4" />
+                      {isAssigning
+                        ? "Processando..."
+                        : assignmentMode === "bulk"
+                          ? "Atribuir para Grupo"
+                          : `Enviar (${selectedUserIds.length})`}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedBadge(null);
+                        setSelectedUserIds([]);
+                      }}
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-slate-500 hover:text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl transition-all border border-slate-800"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="relative z-10 flex flex-col lg:flex-row gap-8">
-                 <div className="lg:w-80 shrink-0 space-y-6">
-                    <div className="flex items-center gap-4">
-                       <div className="w-16 h-16 bg-black/40 border border-slate-800 rounded-2xl flex items-center justify-center p-3">
-                          <img src={selectedBadge.imageUrl} className="w-full h-full object-contain" />
-                       </div>
-                       <div>
-                          <div className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Emblema Selecionado</div>
-                          <div className="text-xl font-black text-white italic uppercase tracking-tighter">{selectedBadge.name}</div>
-                       </div>
-                    </div>
+              <div className="flex-1 space-y-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4 bg-black/40 border border-slate-800 p-3 rounded-3xl">
+                  <div className="w-full relative flex items-center">
+                    <Search className="absolute left-4 w-4 h-4 text-slate-500" />
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar usuários..."
+                      className="w-full bg-black/60 border border-slate-800 rounded-2xl pl-12 pr-4 py-3 text-white text-xs outline-none focus:border-amber-500 transition-all font-sans"
+                    />
+                  </div>
+                </div>
 
-                    <div className="space-y-4 pt-4 border-t border-white/5">
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Modo de Atribuição</label>
-                          <div className="flex bg-black/40 p-1 rounded-2xl border border-slate-800">
-                             <button
-                               onClick={() => setAssignmentMode("individual")}
-                               className={clsx(
-                                 "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                 assignmentMode === "individual" ? "bg-amber-500 text-black shadow-lg" : "text-slate-500"
-                               )}
-                             >Individual</button>
-                             <button
-                               onClick={() => setAssignmentMode("bulk")}
-                               className={clsx(
-                                 "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                 assignmentMode === "bulk" ? "bg-amber-500 text-black shadow-lg" : "text-slate-500"
-                               )}
-                             >Em Massa</button>
-                          </div>
-                       </div>
-
-                       {assignmentMode === "bulk" ? (
-                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Alvo do Envio</label>
-                            <select 
-                               value={selectedTag}
-                               onChange={e => setSelectedTag(e.target.value)}
-                               className="w-full bg-black border border-slate-800 rounded-2xl px-4 py-4 text-white text-xs font-black uppercase tracking-widest focus:border-amber-500 outline-none"
-                            >
-                               <option value="Toda">Toda a Plataforma</option>
-                               <option value="Ginasta">Apenas Ginastas</option>
-                               <option value="Admin">Apenas Admins</option>
-                               <option value="Árbitro">Apenas Árbitros</option>
-                               <option value="Visitante">Apenas Visitantes</option>
-                               <optgroup label="Filtrar por Equipe">
-                                 {Array.from(new Set(users.filter(u => u.team).map(u => u.team))).map(team => (
-                                   <option key={team} value={`Team:${team}`}>Equipe: {team}</option>
-                                 ))}
-                               </optgroup>
-                            </select>
-                         </div>
-                       ) : (
-                         <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                            <div className="text-xs font-bold text-amber-500 mb-1">Dica Individual</div>
-                            <p className="text-[10px] text-amber-500/60 font-medium">Selecione as pessoas na lista ao lado.</p>
-                         </div>
-                       )}
-
-                       <div className="space-y-2 pt-2">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Mensagem do Envio (Commit message)</label>
-                          <textarea 
-                            value={assignMessage}
-                            onChange={e => setAssignMessage(e.target.value)}
-                            placeholder="Ex: Parabéns pela dedicação! (Opcional)"
-                            className="w-full bg-black/40 border border-slate-800 rounded-2xl px-4 py-3 text-white text-xs outline-none focus:border-amber-500 transition-all font-sans h-20 resize-none"
-                          />
-                       </div>
-
-                       <div className="pt-4 flex flex-col gap-3">
-                          <button
-                            onClick={handleAssign}
-                            disabled={isAssigning || (assignmentMode === "individual" && selectedUserIds.length === 0)}
-                            className="w-full bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-[0.2em] text-xs py-5 rounded-2xl transition-all shadow-xl shadow-amber-900/20 active:scale-95 disabled:opacity-30 disabled:active:scale-100 flex items-center justify-center gap-3"
-                          >
-                            <Award className="w-4 h-4" />
-                            {isAssigning ? "Processando..." : assignmentMode === "bulk" ? "Atribuir para Grupo" : `Enviar (${selectedUserIds.length})`}
-                          </button>
-                          <button
-                            onClick={() => { setSelectedBadge(null); setSelectedUserIds([]); }}
-                            className="w-full bg-slate-900 hover:bg-slate-800 text-slate-500 hover:text-white font-black uppercase tracking-widest text-[10px] py-4 rounded-2xl transition-all border border-slate-800"
-                          >Cancelar</button>
-                       </div>
-                    </div>
-                 </div>
-
-                 <div className="flex-1 space-y-4">
-                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-black/40 border border-slate-800 p-3 rounded-3xl">
-                       <div className="w-full relative flex items-center">
-                          <Search className="absolute left-4 w-4 h-4 text-slate-500" />
-                          <input 
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Buscar usuários..."
-                            className="w-full bg-black/60 border border-slate-800 rounded-2xl pl-12 pr-4 py-3 text-white text-xs outline-none focus:border-amber-500 transition-all font-sans"
-                          />
-                       </div>
-                    </div>
-
-                    <div className="bg-black/60 rounded-[2.5rem] border border-slate-800 overflow-hidden max-h-[500px] overflow-y-auto">
-                       <div className="space-y-px">
-                          {filteredAssignUsers.map(u => {
-                            const isSelected = selectedUserIds.includes(u.id);
-                            return (
-                              <button
-                                key={u.id}
-                                onClick={() => {
-                                  if (assignmentMode === "bulk") return;
-                                  setSelectedUserIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
-                                }}
-                                className={clsx(
-                                  "w-full flex items-center justify-between p-4 transition-all text-left border-b border-white/5",
-                                  isSelected ? "bg-amber-500/20" : "hover:bg-white/5",
-                                  assignmentMode === "bulk" && "cursor-default"
-                                )}
-                              >
-                                <div className="flex items-center gap-4">
-                                   <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
-                                      {u.photoURL ? <img src={u.photoURL} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-2.5 text-slate-700" />}
-                                   </div>
-                                   <div>
-                                      <div className="text-xs font-black text-white uppercase truncate max-w-[150px]">{u.competitionName || u.username} {u.verified && <VerifiedBadge />}</div>
-                                      <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{u.tag}</div>
-                                   </div>
-                                </div>
-                                
-                                {assignmentMode === "individual" && (
-                                   <div className={clsx(
-                                     "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
-                                     isSelected ? "bg-amber-500 border-amber-500 text-black scale-110" : "border-slate-800 text-transparent"
-                                   )}>
-                                     <Check className="w-4 h-4 text-black" />
-                                   </div>
-                                )}
-                              </button>
+                <div className="bg-black/60 rounded-[2.5rem] border border-slate-800 overflow-hidden max-h-[500px] overflow-y-auto">
+                  <div className="space-y-px">
+                    {filteredAssignUsers.map((u) => {
+                      const isSelected = selectedUserIds.includes(u.id);
+                      return (
+                        <button
+                          key={u.id}
+                          onClick={() => {
+                            if (assignmentMode === "bulk") return;
+                            setSelectedUserIds((prev) =>
+                              isSelected
+                                ? prev.filter((id) => id !== u.id)
+                                : [...prev, u.id],
                             );
-                          })}
-                          {filteredAssignUsers.length === 0 && (
-                            <div className="py-20 text-center text-slate-600 text-xs font-black uppercase tracking-widest">Nenhum usuário encontrado</div>
+                          }}
+                          className={clsx(
+                            "w-full flex items-center justify-between p-4 transition-all text-left border-b border-white/5",
+                            isSelected ? "bg-amber-500/20" : "hover:bg-white/5",
+                            assignmentMode === "bulk" && "cursor-default",
                           )}
-                       </div>
-                    </div>
-                 </div>
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
+                              {u.photoURL ? (
+                                <img
+                                  src={u.photoURL || undefined}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Users className="w-full h-full p-2.5 text-slate-700" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-xs font-black text-white uppercase truncate max-w-[150px]">
+                                {u.competitionName || u.username}{" "}
+                                {u.verified && <VerifiedBadge />}
+                              </div>
+                              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                                {u.tag}
+                              </div>
+                            </div>
+                          </div>
+
+                          {assignmentMode === "individual" && (
+                            <div
+                              className={clsx(
+                                "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                                isSelected
+                                  ? "bg-amber-500 border-amber-500 text-black scale-110"
+                                  : "border-slate-800 text-transparent",
+                              )}
+                            >
+                              <Check className="w-4 h-4 text-black" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {filteredAssignUsers.length === 0 && (
+                      <div className="py-20 text-center text-slate-600 text-xs font-black uppercase tracking-widest">
+                        Nenhum usuário encontrado
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </motion.section>
-         )}
+            </div>
+          </motion.section>
+        )}
       </AnimatePresence>
     </div>
   );
@@ -769,7 +982,7 @@ function TeamsManager({ teams }: { teams: any[] }) {
         title: name.trim(),
         emoji: emoji.trim() || null,
         imageUrl: imageUrl.trim() || null,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       });
       setName("");
       setEmoji("");
@@ -798,7 +1011,7 @@ function TeamsManager({ teams }: { teams: any[] }) {
             type="text"
             placeholder="Nome da Equipe"
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             className="w-full bg-black/40 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
@@ -807,7 +1020,7 @@ function TeamsManager({ teams }: { teams: any[] }) {
             type="text"
             placeholder="Emoji (Opcional)"
             value={emoji}
-            onChange={e => setEmoji(e.target.value)}
+            onChange={(e) => setEmoji(e.target.value)}
             className="w-full bg-black/40 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
@@ -825,26 +1038,38 @@ function TeamsManager({ teams }: { teams: any[] }) {
             type="url"
             placeholder="URL da Imagem da Equipe (Opcional)"
             value={imageUrl}
-            onChange={e => setImageUrl(e.target.value)}
+            onChange={(e) => setImageUrl(e.target.value)}
             className="w-full bg-black/40 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
           />
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {teams.map(t => (
-          <div key={t.id} className="bg-black/40 border border-slate-800 rounded-xl p-3 flex justify-between items-center">
+        {teams.map((t) => (
+          <div
+            key={t.id}
+            className="bg-black/40 border border-slate-800 rounded-xl p-3 flex justify-between items-center"
+          >
             <div className="flex items-center gap-3">
               {t.imageUrl ? (
-                <img src={t.imageUrl} alt={t.title || t.name} className="w-8 h-8 rounded-md object-cover" />
+                <img
+                  src={t.imageUrl || undefined}
+                  alt={t.title || t.name}
+                  className="w-8 h-8 rounded-md object-cover"
+                />
               ) : t.emoji ? (
                 <span className="text-2xl">{t.emoji}</span>
               ) : (
                 <div className="w-8 h-8 bg-slate-800 rounded-md"></div>
               )}
-              <span className="font-bold text-white text-sm">{t.title || t.name}</span>
+              <span className="font-bold text-white text-sm">
+                {t.title || t.name}
+              </span>
             </div>
-            <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:text-red-400 text-xs font-bold uppercase tracking-wider">
+            <button
+              onClick={() => handleDelete(t.id)}
+              className="text-red-500 hover:text-red-400 text-xs font-bold uppercase tracking-wider"
+            >
               X
             </button>
           </div>
@@ -872,7 +1097,10 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
   const [verified, setVerified] = useState(!!user.verified);
   const [editingUsername, setEditingUsername] = useState(user.username || "");
   const [editingPassword, setEditingPassword] = useState(getUserPassword(user));
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
     setEditingPassword(getUserPassword(user));
@@ -908,15 +1136,21 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
         musicBase64: tag === "Ginasta" ? musicUrl || null : null,
         verified: !!verified,
         password: trimmedPwd,
-        email: `pass_${trimmedPwd}_${user.id}@gymstars.internal`
+        email: `pass_${trimmedPwd}_${user.id}@gymstars.internal`,
       };
 
       await updateDoc(doc(db, "users", user.id), updates);
-      setStatusMsg({ text: "Usuário atualizado com sucesso!", type: "success" });
+      setStatusMsg({
+        text: "Usuário atualizado com sucesso!",
+        type: "success",
+      });
       setTimeout(() => setStatusMsg(null), 4000);
       setExpanded(false);
     } catch (err: any) {
-      setStatusMsg({ text: "Erro ao atualizar: " + err.message, type: "error" });
+      setStatusMsg({
+        text: "Erro ao atualizar: " + err.message,
+        type: "error",
+      });
       setTimeout(() => setStatusMsg(null), 5000);
     }
   };
@@ -924,8 +1158,10 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
   const handleRemoveBadge = async (badgeId: string, idx?: number) => {
     try {
       const current = user.badges || [];
-      const badgeToRemove = current.find((b: any, i: number) => b.id ? b.id === badgeId : i === idx);
-      
+      const badgeToRemove = current.find((b: any, i: number) =>
+        b.id ? b.id === badgeId : i === idx,
+      );
+
       const updated = current.filter((b: any, i: number) => {
         if (b.id) return b.id !== badgeId;
         return i !== idx;
@@ -933,11 +1169,17 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
 
       const medals = { ...(user.medals || { gold: 0, silver: 0, bronze: 0 }) };
       if (badgeToRemove) {
-        const bName = typeof badgeToRemove === "string" ? badgeToRemove : badgeToRemove.name;
+        const bName =
+          typeof badgeToRemove === "string"
+            ? badgeToRemove
+            : badgeToRemove.name;
         if (bName) {
-           if (bName.startsWith("Ouro")) medals.gold = Math.max(0, (medals.gold || 0) - 1);
-           if (bName.startsWith("Prata")) medals.silver = Math.max(0, (medals.silver || 0) - 1);
-           if (bName.startsWith("Bronze")) medals.bronze = Math.max(0, (medals.bronze || 0) - 1);
+          if (bName.startsWith("Ouro"))
+            medals.gold = Math.max(0, (medals.gold || 0) - 1);
+          if (bName.startsWith("Prata"))
+            medals.silver = Math.max(0, (medals.silver || 0) - 1);
+          if (bName.startsWith("Bronze"))
+            medals.bronze = Math.max(0, (medals.bronze || 0) - 1);
         }
       }
 
@@ -959,11 +1201,11 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
         <div className="flex items-center gap-4">
           {user.photoURL ? (
             <img
-              src={user.photoURL}
+              src={user.photoURL || undefined}
               className="w-10 h-10 rounded-full object-cover shadow-md"
             />
           ) : (
-             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
               <UserCog className="w-5 h-5 text-slate-400" />
             </div>
           )}
@@ -990,10 +1232,14 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
             </div>
             <div className="flex items-center gap-2 mt-0.5 max-w-full">
               <span className="text-slate-500 text-xs truncate max-w-[150px] sm:max-w-xs">
-                {user.email && user.email.includes("gymstars.internal") ? "E-mail interno (Sistema)" : user.email}
+                {user.email && user.email.includes("gymstars.internal")
+                  ? "E-mail interno (Sistema)"
+                  : user.email}
               </span>
               {user.team && (
-                 <span className="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded font-medium">Equipe: {user.team}</span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded font-medium">
+                  Equipe: {user.team}
+                </span>
               )}
             </div>
           </div>
@@ -1013,11 +1259,13 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
           >
             <div className="p-5 border-t border-slate-800 bg-black/20 space-y-6">
               {statusMsg && (
-                <div className={`p-4 rounded-xl text-sm font-bold border transition-all ${
-                  statusMsg.type === "success" 
-                    ? "bg-green-500/10 border-green-500/30 text-green-400" 
-                    : "bg-red-500/10 border-red-500/30 text-red-400"
-                }`}>
+                <div
+                  className={`p-4 rounded-xl text-sm font-bold border transition-all ${
+                    statusMsg.type === "success"
+                      ? "bg-green-500/10 border-green-500/30 text-green-400"
+                      : "bg-red-500/10 border-red-500/30 text-red-400"
+                  }`}
+                >
                   {statusMsg.text}
                 </div>
               )}
@@ -1030,7 +1278,9 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
                   <input
                     type="text"
                     value={editingUsername}
-                    onChange={(e) => setEditingUsername(e.target.value.toLowerCase())}
+                    onChange={(e) =>
+                      setEditingUsername(e.target.value.toLowerCase())
+                    }
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
                     placeholder="Novo nome de usuário"
                   />
@@ -1070,7 +1320,11 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
                   <select
                     value={tag}
                     onChange={(e) => setTag(e.target.value)}
-                    disabled={user.username === "gymstarsbr" || user.id === "gymstarsbr" || user.email === "f.brunobrito@gmail.com"}
+                    disabled={
+                      user.username === "gymstarsbr" ||
+                      user.id === "gymstarsbr" ||
+                      user.email === "f.brunobrito@gmail.com"
+                    }
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
                   >
                     <option value="Visitante">Visitante</option>
@@ -1113,7 +1367,9 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
                     <div>
                       <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-2">
                         Equipe (Team)
-                        <span className="bg-slate-800 text-slate-500 px-1 py-0.5 rounded text-[8px]">Para TF</span>
+                        <span className="bg-slate-800 text-slate-500 px-1 py-0.5 rounded text-[8px]">
+                          Para TF
+                        </span>
                       </label>
                       <select
                         value={team}
@@ -1121,8 +1377,10 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:border-indigo-500 focus:outline-none"
                       >
                         <option value="">Independente / Nenhuma</option>
-                        {teams.map(t => (
-                           <option key={t.id} value={t.title}>{t.title}</option>
+                        {teams.map((t) => (
+                          <option key={t.id} value={t.title}>
+                            {t.title}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -1141,14 +1399,21 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
                         <button
                           onClick={() => {
                             if (!musicUrl) {
-                              setStatusMsg({ text: "Insira uma URL", type: "error" });
+                              setStatusMsg({
+                                text: "Insira uma URL",
+                                type: "error",
+                              });
                               setTimeout(() => setStatusMsg(null), 4000);
                               return;
                             }
                             let u = musicUrl;
-                            if (u?.includes?.("dropbox.com")) u = u.replace(/dl=[012]/, "raw=1");
-                            new Audio(u).play().catch(e => {
-                              setStatusMsg({ text: "Erro ao tocar: " + e.message, type: "error" });
+                            if (u?.includes?.("dropbox.com"))
+                              u = u.replace(/dl=[012]/, "raw=1");
+                            new Audio(u).play().catch((e) => {
+                              setStatusMsg({
+                                text: "Erro ao tocar: " + e.message,
+                                type: "error",
+                              });
                               setTimeout(() => setStatusMsg(null), 5000);
                             });
                           }}
@@ -1163,18 +1428,18 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
               </div>
 
               <div className="flex justify-between border-b border-slate-800 pb-5">
-                 <button
-                   onClick={handleDeleteUser}
-                   className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold px-6 py-2 rounded-xl text-xs uppercase tracking-widest transition-all border border-red-500/20"
-                 >
-                   Deletar Conta
-                 </button>
-                 <button
-                   onClick={handleSaveUser}
-                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2 rounded-xl text-sm transition-colors shadow-lg shadow-indigo-900/20"
-                 >
-                   Salvar Alterações do Usuário
-                 </button>
+                <button
+                  onClick={handleDeleteUser}
+                  className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold px-6 py-2 rounded-xl text-xs uppercase tracking-widest transition-all border border-red-500/20"
+                >
+                  Deletar Conta
+                </button>
+                <button
+                  onClick={handleSaveUser}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2 rounded-xl text-sm transition-colors shadow-lg shadow-indigo-900/20"
+                >
+                  Salvar Alterações do Usuário
+                </button>
               </div>
 
               <div className="pt-2">
@@ -1197,7 +1462,7 @@ function AdminUserRow({ user, teams }: { user: any; teams: any[] }) {
                           ×
                         </button>
                         <img
-                          src={b.imageUrl}
+                          src={b.imageUrl || undefined}
                           alt={b.name}
                           className="w-10 h-10 object-contain mb-2"
                         />
@@ -1256,7 +1521,7 @@ const DEFAULT_CARDS = [
     iconName: "Sparkles",
     color: "text-indigo-400",
     link: "/quem-somos",
-  }
+  },
 ];
 
 const AVAILABLE_ICONS = [
@@ -1277,7 +1542,7 @@ const AVAILABLE_ICONS = [
   { name: "Flame", label: "Fogo/Chama" },
   { name: "Shield", label: "Escudo" },
   { name: "MapPin", label: "Localização" },
-  { name: "Search", label: "Lupa/Busca" }
+  { name: "Search", label: "Lupa/Busca" },
 ];
 
 const AVAILABLE_COLORS = [
@@ -1288,10 +1553,13 @@ const AVAILABLE_COLORS = [
   { value: "text-rose-500", label: "Rosa", bg: "bg-rose-500/10" },
   { value: "text-amber-500", label: "Laranja", bg: "bg-amber-500/10" },
   { value: "text-cyan-500", label: "Ciano", bg: "bg-cyan-500/10" },
-  { value: "text-red-500", label: "Vermelho", bg: "bg-red-500/10" }
+  { value: "text-red-500", label: "Vermelho", bg: "bg-red-500/10" },
 ];
 
-const AdminIconMapping: Record<string, React.ComponentType<{ className?: string }>> = {
+const AdminIconMapping: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   Trophy,
   BookOpen,
   Shapes,
@@ -1309,7 +1577,7 @@ const AdminIconMapping: Record<string, React.ComponentType<{ className?: string 
   Flame,
   Shield,
   MapPin,
-  Search
+  Search,
 };
 
 function HomepageContentManager() {
@@ -1322,10 +1590,15 @@ function HomepageContentManager() {
 
   const [isBannerLinkMenuOpen, setIsBannerLinkMenuOpen] = useState(false);
 
-  const [cardIconTabs, setCardIconTabs] = useState<Record<number, "gallery" | "custom">>({});
+  const [cardIconTabs, setCardIconTabs] = useState<
+    Record<number, "gallery" | "custom">
+  >({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [statusMsg, setStatusMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   // Expanded card state
   const [expandedCardIdx, setExpandedCardIdx] = useState<number | null>(null);
@@ -1343,7 +1616,7 @@ function HomepageContentManager() {
 
           if (data.cards && Array.isArray(data.cards)) {
             const loadedCards = [...data.cards];
-            if (!loadedCards.some(c => c.link === "/quem-somos")) {
+            if (!loadedCards.some((c) => c.link === "/quem-somos")) {
               loadedCards.push({
                 title: "Quem Somos",
                 desc: "Nossa história, missão e compromisso com o GymStars Brasil.",
@@ -1368,7 +1641,10 @@ function HomepageContentManager() {
       });
   }, []);
 
-  const handleCardIconUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCardIconUpload = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -1395,8 +1671,15 @@ function HomepageContentManager() {
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
           const compressed = canvas.toDataURL("image/png", 0.95); // High quality
-          updateCard(index, { iconBase64: compressed, iconUrl: "", iconName: "" });
-          showToast(`Ícone do cartão #${index + 1} salvo com alta qualidade!`, "success");
+          updateCard(index, {
+            iconBase64: compressed,
+            iconUrl: "",
+            iconName: "",
+          });
+          showToast(
+            `Ícone do cartão #${index + 1} salvo com alta qualidade!`,
+            "success",
+          );
         }
       };
       img.src = event.target?.result as string;
@@ -1443,7 +1726,7 @@ function HomepageContentManager() {
       iconName: "Star",
       color: "text-teal-500",
       link: "/",
-      iconSize: 32
+      iconSize: 32,
     };
     setCards((p) => [...p, newCard]);
     setExpandedCardIdx(cards.length);
@@ -1468,15 +1751,21 @@ function HomepageContentManager() {
           iconBase64: c.iconBase64 || "",
           iconSize: Number(c.iconSize) || 32,
           color: c.color || "text-yellow-500",
-          link: c.link.trim()
+          link: c.link.trim(),
         })),
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       };
 
       await setDoc(doc(db, "appContent", "homepage"), payload, { merge: true });
-      showToast("Tudo certo! As atualizações da Home já estão no ar em tempo real.", "success");
+      showToast(
+        "Tudo certo! As atualizações da Home já estão no ar em tempo real.",
+        "success",
+      );
     } catch (e: any) {
-      showToast("Ocorreu um erro ao salvar as modificações: " + e.message, "error");
+      showToast(
+        "Ocorreu um erro ao salvar as modificações: " + e.message,
+        "error",
+      );
     } finally {
       setSaving(false);
     }
@@ -1519,7 +1808,11 @@ function HomepageContentManager() {
   };
 
   const restoreDefault = async () => {
-    if (!window.confirm("Deseja mesmo restaurar as configurações originais/padrão da Home? Toda a personalização atual será apagada (excluindo logo e subtítulo que agora permanecem fixos).")) {
+    if (
+      !window.confirm(
+        "Deseja mesmo restaurar as configurações originais/padrão da Home? Toda a personalização atual será apagada (excluindo logo e subtítulo que agora permanecem fixos).",
+      )
+    ) {
       return;
     }
     setSaving(true);
@@ -1530,7 +1823,7 @@ function HomepageContentManager() {
         bannerType: "upload",
         bannerBase64: "",
         bannerUrl: "",
-        bannerLink: "/"
+        bannerLink: "/",
       });
       setCards([...DEFAULT_CARDS]);
       setBannerEnabled(false);
@@ -1538,7 +1831,10 @@ function HomepageContentManager() {
       setBannerBase64("");
       setBannerUrl("");
       setBannerLink("/");
-      showToast("Design e links restaurados para as configurações originais!", "success");
+      showToast(
+        "Design e links restaurados para as configurações originais!",
+        "success",
+      );
     } catch (e: any) {
       showToast("Erro ao restaurar: " + e.message, "error");
     } finally {
@@ -1571,166 +1867,227 @@ function HomepageContentManager() {
       </div>
 
       {statusMsg && (
-        <div className={`fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl flex items-center gap-3 text-sm font-bold shadow-2xl border animate-fade-in ${
-          statusMsg.type === "success" 
-            ? "bg-slate-950 border-green-500/40 text-green-400" 
-            : "bg-slate-950 border-red-500/40 text-red-400"
-        }`}>
-          <div className={`w-2.5 h-2.5 rounded-full ${statusMsg.type === "success" ? "bg-green-500" : "bg-red-500"} animate-ping shrink-0`} />
+        <div
+          className={`fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl flex items-center gap-3 text-sm font-bold shadow-2xl border animate-fade-in ${
+            statusMsg.type === "success"
+              ? "bg-slate-950 border-green-500/40 text-green-400"
+              : "bg-slate-950 border-red-500/40 text-red-400"
+          }`}
+        >
+          <div
+            className={`w-2.5 h-2.5 rounded-full ${statusMsg.type === "success" ? "bg-green-500" : "bg-red-500"} animate-ping shrink-0`}
+          />
           <span>{statusMsg.text}</span>
-          <button onClick={() => setStatusMsg(null)} className="text-slate-400 hover:text-white ml-2 text-xs font-normal transition-colors">✕</button>
+          <button
+            onClick={() => setStatusMsg(null)}
+            className="text-slate-400 hover:text-white ml-2 text-xs font-normal transition-colors"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {/* Grid: Edit & Form left, Real-time Mini Preview on the right! */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
         {/* Left Column (Forms / Cards List Editor) */}
         <div className="lg:col-span-7 space-y-8">
-          
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-white border-b border-slate-800 pb-2 flex items-center gap-2">
               Anúncio em Destaque (Outdoor)
-              <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-widest font-black">Topo da Página Inicial</span>
+              <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-widest font-black">
+                Topo da Página Inicial
+              </span>
             </h3>
-            
+
             <div className="bg-black/20 border border-slate-800 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-6">
-              
               <div className="space-y-4">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={bannerEnabled} 
-                    onChange={e => setBannerEnabled(e.target.checked)} 
-                    className="w-4 h-4 rounded text-[#009c3b] bg-slate-900 border-slate-700" 
+                  <input
+                    type="checkbox"
+                    checked={bannerEnabled}
+                    onChange={(e) => setBannerEnabled(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#009c3b] bg-slate-900 border-slate-700"
                   />
-                  <span className="text-sm font-bold text-slate-300">Mostrar Anúncio no Topo da Home</span>
+                  <span className="text-sm font-bold text-slate-300">
+                    Mostrar Anúncio no Topo da Home
+                  </span>
                 </label>
 
                 <div className="relative">
-                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">Destino ao Clicar (Rota)</label>
-                  <button 
-                    onClick={() => setIsBannerLinkMenuOpen(!isBannerLinkMenuOpen)}
+                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+                    Destino ao Clicar (Rota)
+                  </label>
+                  <button
+                    onClick={() =>
+                      setIsBannerLinkMenuOpen(!isBannerLinkMenuOpen)
+                    }
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs flex items-center justify-between hover:bg-slate-800 transition-colors"
                   >
                     <span className="truncate">
-                      {bannerLink === "/" ? "Início (Home)" :
-                       bannerLink === "/competitions" ? "Competições" :
-                       bannerLink === "/gymnasts" ? "Ginastas" :
-                       bannerLink === "/courses" ? "Cursos" :
-                       bannerLink === "/referee" ? "Arbitragem" :
-                       bannerLink === "/elements" ? "Quadro de Elementos" :
-                       bannerLink === "/chat" ? "Chat GYMSTARS" :
-                       bannerLink === "/quem-somos" ? "Quem Somos" : bannerLink || "Selecione um destino"}
+                      {bannerLink === "/"
+                        ? "Início (Home)"
+                        : bannerLink === "/competitions"
+                          ? "Competições"
+                          : bannerLink === "/gymnasts"
+                            ? "Ginastas"
+                            : bannerLink === "/courses"
+                              ? "Cursos"
+                              : bannerLink === "/referee"
+                                ? "Arbitragem"
+                                : bannerLink === "/elements"
+                                  ? "Quadro de Elementos"
+                                  : bannerLink === "/chat"
+                                    ? "Chat GYMSTARS"
+                                    : bannerLink === "/quem-somos"
+                                      ? "Quem Somos"
+                                      : bannerLink || "Selecione um destino"}
                     </span>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isBannerLinkMenuOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 transition-transform ${isBannerLinkMenuOpen ? "rotate-180" : ""}`}
+                    />
                   </button>
-                  
+
                   <AnimatePresence>
-                     {isBannerLinkMenuOpen && (
-                        <>
-                           <div className="fixed inset-0 z-40" onClick={() => setIsBannerLinkMenuOpen(false)}></div>
-                           <motion.div 
-                              initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.15 }}
-                              className="absolute top-16 left-0 w-full bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
-                           >
-                              <div className="max-h-48 overflow-y-auto no-scrollbar py-1">
-                                {[
-                                  { val: "/", label: "Início (Home)" },
-                                  { val: "/competitions", label: "Competições" },
-                                  { val: "/gymnasts", label: "Ginastas" },
-                                  { val: "/courses", label: "Cursos" },
-                                  { val: "/referee", label: "Arbitragem" },
-                                  { val: "/elements", label: "Quadro de Elementos" },
-                                  { val: "/chat", label: "Chat GYMSTARS" },
-                                  { val: "/quem-somos", label: "Quem Somos" },
-                                ].map((opt) => (
-                                  <button
-                                    key={opt.val}
-                                    onClick={() => {
-                                      setBannerLink(opt.val);
-                                      setIsBannerLinkMenuOpen(false);
-                                    }}
-                                    className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-slate-700 transition-colors flex items-center justify-between ${
-                                      bannerLink === opt.val ? "text-[#009c3b] bg-[#009c3b]/10" : "text-slate-300"
-                                    }`}
-                                  >
-                                    {opt.label}
-                                    {bannerLink === opt.val && <Check className="w-3.5 h-3.5" />}
-                                  </button>
-                                ))}
-                              </div>
-                           </motion.div>
-                        </>
-                     )}
+                    {isBannerLinkMenuOpen && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsBannerLinkMenuOpen(false)}
+                        ></div>
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-16 left-0 w-full bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
+                        >
+                          <div className="max-h-48 overflow-y-auto no-scrollbar py-1">
+                            {[
+                              { val: "/", label: "Início (Home)" },
+                              { val: "/competitions", label: "Competições" },
+                              { val: "/gymnasts", label: "Ginastas" },
+                              { val: "/courses", label: "Cursos" },
+                              { val: "/referee", label: "Arbitragem" },
+                              {
+                                val: "/elements",
+                                label: "Quadro de Elementos",
+                              },
+                              { val: "/chat", label: "Chat GYMSTARS" },
+                              { val: "/quem-somos", label: "Quem Somos" },
+                            ].map((opt) => (
+                              <button
+                                key={opt.val}
+                                onClick={() => {
+                                  setBannerLink(opt.val);
+                                  setIsBannerLinkMenuOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-slate-700 transition-colors flex items-center justify-between ${
+                                  bannerLink === opt.val
+                                    ? "text-[#009c3b] bg-[#009c3b]/10"
+                                    : "text-slate-300"
+                                }`}
+                              >
+                                {opt.label}
+                                {bannerLink === opt.val && (
+                                  <Check className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
                   </AnimatePresence>
-                  <p className="text-[10px] text-slate-500 mt-1 mb-0">Redirecionar usuário ao clicar na imagem.</p>
+                  <p className="text-[10px] text-slate-500 mt-1 mb-0">
+                    Redirecionar usuário ao clicar na imagem.
+                  </p>
                 </div>
 
                 <div>
-                   <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5 mt-2">Fonte da Imagem</label>
-                   <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1">
-                     <button
-                       onClick={() => setBannerType("upload")}
-                       className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                         bannerType === "upload" ? "bg-[#009c3b] text-white" : "text-slate-400 hover:bg-slate-800"
-                       }`}
-                     >
-                       Upload / Dispositivo
-                     </button>
-                     <button
-                       onClick={() => setBannerType("url")}
-                       className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                         bannerType === "url" ? "bg-[#009c3b] text-white" : "text-slate-400 hover:bg-slate-800"
-                       }`}
-                     >
-                       Link URL
-                     </button>
-                   </div>
+                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5 mt-2">
+                    Fonte da Imagem
+                  </label>
+                  <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1">
+                    <button
+                      onClick={() => setBannerType("upload")}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                        bannerType === "upload"
+                          ? "bg-[#009c3b] text-white"
+                          : "text-slate-400 hover:bg-slate-800"
+                      }`}
+                    >
+                      Upload / Dispositivo
+                    </button>
+                    <button
+                      onClick={() => setBannerType("url")}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                        bannerType === "url"
+                          ? "bg-[#009c3b] text-white"
+                          : "text-slate-400 hover:bg-slate-800"
+                      }`}
+                    >
+                      Link URL
+                    </button>
+                  </div>
                 </div>
 
                 {bannerType === "upload" && (
-                   <div>
-                     <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Mídia do Anúncio (PNG/JPG)</label>
-                     <input
-                       type="file"
-                       accept="image/*"
-                       onChange={handleBannerUpload}
-                       className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#009c3b] file:text-white hover:file:bg-[#007b2e]"
-                     />
-                   </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                      Mídia do Anúncio (PNG/JPG)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerUpload}
+                      className="w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#009c3b] file:text-white hover:file:bg-[#007b2e]"
+                    />
+                  </div>
                 )}
                 {bannerType === "url" && (
-                   <div>
-                     <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">URL Direto</label>
-                     <input
-                        type="url"
-                        value={bannerUrl}
-                        onChange={(e) => setBannerUrl(e.target.value)}
-                        placeholder="https://..."
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
-                     />
-                     <p className="text-[9px] text-slate-500 mt-1">Insira um link direto para a imagem.</p>
-                   </div>
-                 )}
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                      URL Direto
+                    </label>
+                    <input
+                      type="url"
+                      value={bannerUrl}
+                      onChange={(e) => setBannerUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white"
+                    />
+                    <p className="text-[9px] text-slate-500 mt-1">
+                      Insira um link direto para a imagem.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Preview */}
               <div className="flex flex-col gap-2 w-full mt-4 md:mt-0">
                 <div className="bg-slate-950 border border-slate-800 rounded-xl p-0 flex flex-col items-center justify-center relative overflow-hidden aspect-[3/1] w-full">
-                   {bannerType === "upload" && bannerBase64 ? (
-                      <img src={bannerBase64} alt="Outdoor Preview" className="w-full h-full object-cover pointer-events-none select-none" />
-                   ) : bannerType === "url" && bannerUrl ? (
-                      <img src={bannerUrl} alt="Outdoor Preview" className="w-full h-full object-cover pointer-events-none select-none" />
-                   ) : (
-                      <div className="text-slate-600 text-xs font-bold uppercase tracking-widest text-center flex flex-col items-center gap-2">
-                        <LayoutDashboard className="w-6 h-6 opacity-40" />
-                        Sem Mídia
-                      </div>
-                   )}
+                  {bannerType === "upload" && bannerBase64 ? (
+                    <img
+                      src={bannerBase64 || undefined}
+                      alt="Outdoor Preview"
+                      className="w-full h-full object-cover pointer-events-none select-none"
+                    />
+                  ) : bannerType === "url" && bannerUrl ? (
+                    <img
+                      src={bannerUrl || undefined}
+                      alt="Outdoor Preview"
+                      className="w-full h-full object-cover pointer-events-none select-none"
+                    />
+                  ) : (
+                    <div className="text-slate-600 text-xs font-bold uppercase tracking-widest text-center flex flex-col items-center gap-2">
+                      <LayoutDashboard className="w-6 h-6 opacity-40" />
+                      Sem Mídia
+                    </div>
+                  )}
                 </div>
-                
-                {((bannerType === "upload" && bannerBase64) || (bannerType === "url" && bannerUrl)) && (
+
+                {((bannerType === "upload" && bannerBase64) ||
+                  (bannerType === "url" && bannerUrl)) && (
                   <button
                     onClick={() => {
                       setBannerEnabled(false);
@@ -1770,27 +2127,44 @@ function HomepageContentManager() {
                 const cardIcon = card.iconBase64 || card.iconUrl;
 
                 return (
-                  <div key={idx} className="bg-black/30 border border-slate-800 rounded-2xl overflow-hidden transition-all">
-                    
+                  <div
+                    key={idx}
+                    className="bg-black/30 border border-slate-800 rounded-2xl overflow-hidden transition-all"
+                  >
                     {/* Collapsible Header Row */}
-                    <div 
-                      onClick={() => setExpandedCardIdx(isExpanded ? null : idx)}
+                    <div
+                      onClick={() =>
+                        setExpandedCardIdx(isExpanded ? null : idx)
+                      }
                       className="p-3 bg-slate-900/40 hover:bg-slate-900/70 flex items-center justify-between cursor-pointer border-b border-slate-800/40 select-none"
                     >
                       <div className="flex items-center gap-3">
                         {cardIcon && (
-                          <div className={`p-1.5 rounded-lg bg-black/40 ${card.color || "text-[#009c3b]"}`}>
-                            <img src={cardIcon} alt="" className="w-5 h-5 object-contain" />
+                          <div
+                            className={`p-1.5 rounded-lg bg-black/40 ${card.color || "text-[#009c3b]"}`}
+                          >
+                            <img
+                              src={cardIcon || undefined}
+                              alt=""
+                              className="w-5 h-5 object-contain"
+                            />
                           </div>
                         )}
                         <div>
-                          <span className="font-bold text-white text-sm">{card.title || "(Sem Título)"}</span>
-                          <span className="text-[10px] text-slate-500 block">Link: {card.link || "/"}</span>
+                          <span className="font-bold text-white text-sm">
+                            {card.title || "(Sem Título)"}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">
+                            Link: {card.link || "/"}
+                          </span>
                         </div>
                       </div>
 
                       {/* Header Actions */}
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button
                           onClick={() => moveCard(idx, -1)}
                           disabled={idx === 0}
@@ -1834,29 +2208,41 @@ function HomepageContentManager() {
                           {/* Card Text edits */}
                           <div className="space-y-4">
                             <div>
-                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Título do Cartão</label>
+                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                Título do Cartão
+                              </label>
                               <input
                                 type="text"
                                 value={card.title}
-                                onChange={(e) => updateCard(idx, { title: e.target.value })}
+                                onChange={(e) =>
+                                  updateCard(idx, { title: e.target.value })
+                                }
                                 className="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-1.5 text-white"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Descrição curta</label>
+                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                Descrição curta
+                              </label>
                               <textarea
                                 value={card.desc}
-                                onChange={(e) => updateCard(idx, { desc: e.target.value })}
+                                onChange={(e) =>
+                                  updateCard(idx, { desc: e.target.value })
+                                }
                                 rows={2}
                                 className="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-1.5 text-white"
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Rota interna (Link)</label>
+                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                Rota interna (Link)
+                              </label>
                               <input
                                 type="text"
                                 value={card.link}
-                                onChange={(e) => updateCard(idx, { link: e.target.value })}
+                                onChange={(e) =>
+                                  updateCard(idx, { link: e.target.value })
+                                }
                                 className="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-1.5 text-white"
                               />
                             </div>
@@ -1866,20 +2252,29 @@ function HomepageContentManager() {
                           <div className="space-y-4">
                             {/* Color Accent Picker */}
                             <div>
-                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">Cor Destaque</label>
+                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+                                Cor Destaque
+                              </label>
                               <div className="grid grid-cols-4 gap-1.5">
                                 {AVAILABLE_COLORS.map((col) => (
                                   <button
                                     key={col.value}
                                     type="button"
-                                    onClick={() => updateCard(idx, { color: col.value })}
+                                    onClick={() =>
+                                      updateCard(idx, { color: col.value })
+                                    }
                                     className={`py-1 rounded border text-[10px] font-medium transition-all ${
-                                      card.color === col.value 
-                                        ? "border-[#009c3b] bg-[#009c3b]/10 text-white font-bold" 
+                                      card.color === col.value
+                                        ? "border-[#009c3b] bg-[#009c3b]/10 text-white font-bold"
                                         : "border-slate-800 bg-slate-900/50 hover:bg-slate-800 text-slate-400"
                                     }`}
                                   >
-                                    <span className={`inline-block w-2 h-2 rounded-full mr-1 ${col.value}`} style={{ backgroundColor: 'currentColor' }} />
+                                    <span
+                                      className={`inline-block w-2 h-2 rounded-full mr-1 ${col.value}`}
+                                      style={{
+                                        backgroundColor: "currentColor",
+                                      }}
+                                    />
                                     {col.label}
                                   </button>
                                 ))}
@@ -1888,22 +2283,36 @@ function HomepageContentManager() {
 
                             {/* Icon Type Selection - Custom PNG Upload / URL only */}
                             <div>
-                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Definição do Ícone (Somente PNG Upload/URL)</label>
+                              <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                                Definição do Ícone (Somente PNG Upload/URL)
+                              </label>
                               <div className="space-y-3">
                                 <div className="space-y-3 bg-black/10 border border-slate-800/40 p-3 rounded-xl font-sans">
                                   {card.iconBase64 ? (
                                     <div className="flex items-center gap-3 bg-black/30 p-2 border border-slate-800 rounded-lg">
                                       <div className="bg-[#009c3b]/10 border border-[#009c3b]/20 p-2 rounded-lg shrink-0">
-                                        <img src={card.iconBase64} alt="" className="w-8 h-8 object-contain" />
+                                        <img
+                                          src={card.iconBase64 || undefined}
+                                          alt=""
+                                          className="w-8 h-8 object-contain"
+                                        />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-bold text-white uppercase tracking-wider">Ícone PNG Customizado</p>
-                                        <p className="text-[9px] text-slate-400 truncate">Salvo em base64 compactada</p>
+                                        <p className="text-[10px] font-bold text-white uppercase tracking-wider">
+                                          Ícone PNG Customizado
+                                        </p>
+                                        <p className="text-[9px] text-slate-400 truncate">
+                                          Salvo em base64 compactada
+                                        </p>
                                       </div>
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          updateCard(idx, { iconBase64: "", iconUrl: "", iconName: "" });
+                                          updateCard(idx, {
+                                            iconBase64: "",
+                                            iconUrl: "",
+                                            iconName: "",
+                                          });
                                         }}
                                         className="text-[10px] font-bold text-red-400 hover:text-red-300 bg-red-950/20 px-2.5 py-1.5 rounded-lg border border-red-900/30 transition-all shrink-0"
                                       >
@@ -1913,16 +2322,28 @@ function HomepageContentManager() {
                                   ) : card.iconUrl ? (
                                     <div className="flex items-center gap-3 bg-black/30 p-2 border border-slate-800 rounded-lg">
                                       <div className="bg-[#009c3b]/10 border border-[#009c3b]/20 p-2 rounded-lg shrink-0">
-                                        <img src={card.iconUrl} alt="" className="w-8 h-8 object-contain" />
+                                        <img
+                                          src={card.iconUrl || undefined}
+                                          alt=""
+                                          className="w-8 h-8 object-contain"
+                                        />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-bold text-white uppercase tracking-wider">URL do Ícone PNG</p>
-                                        <p className="text-[9px] text-slate-400 truncate">{card.iconUrl}</p>
+                                        <p className="text-[10px] font-bold text-white uppercase tracking-wider">
+                                          URL do Ícone PNG
+                                        </p>
+                                        <p className="text-[9px] text-slate-400 truncate">
+                                          {card.iconUrl}
+                                        </p>
                                       </div>
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          updateCard(idx, { iconBase64: "", iconUrl: "", iconName: "" });
+                                          updateCard(idx, {
+                                            iconBase64: "",
+                                            iconUrl: "",
+                                            iconName: "",
+                                          });
                                         }}
                                         className="text-[10px] font-bold text-red-550 hover:text-red-400 bg-red-950/20 px-2.5 py-1.5 rounded-lg border border-red-900/30 transition-all shrink-0"
                                       >
@@ -1934,79 +2355,103 @@ function HomepageContentManager() {
                                   <div className="grid grid-cols-1 gap-2">
                                     <label className="flex flex-col items-center justify-center py-2.5 bg-slate-900/40 hover:bg-slate-900/80 border border-dashed border-slate-700 hover:border-[#009c3b] rounded-lg cursor-pointer transition-all text-[10px] font-bold text-slate-400 group">
                                       <Upload className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform mb-1" />
-                                      <span>{card.iconBase64 || card.iconUrl ? "Substituir com Novo PNG" : "Fazer Upload de Ícone PNG"}</span>
+                                      <span>
+                                        {card.iconBase64 || card.iconUrl
+                                          ? "Substituir com Novo PNG"
+                                          : "Fazer Upload de Ícone PNG"}
+                                      </span>
                                       <input
                                         type="file"
                                         accept="image/*"
-                                        onChange={(e) => handleCardIconUpload(idx, e)}
+                                        onChange={(e) =>
+                                          handleCardIconUpload(idx, e)
+                                        }
                                         className="hidden"
                                       />
                                     </label>
                                   </div>
 
                                   <div className="space-y-1">
-                                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Ou insira link de imagem direta (URL):</span>
+                                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">
+                                      Ou insira link de imagem direta (URL):
+                                    </span>
                                     <input
                                       type="url"
                                       placeholder="https://exemplo.com/icon.png"
                                       value={card.iconUrl || ""}
-                                      onChange={(e) => updateCard(idx, { iconUrl: e.target.value, iconBase64: "", iconName: "" })}
+                                      onChange={(e) =>
+                                        updateCard(idx, {
+                                          iconUrl: e.target.value,
+                                          iconBase64: "",
+                                          iconName: "",
+                                        })
+                                      }
                                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white text-xs focus:ring-1 focus:ring-[#009c3b]"
                                     />
                                   </div>
                                 </div>
 
-                                      {/* Ajustar Tamanho do Ícone */}
-                                      <div className="bg-black/45 p-3 rounded-xl border border-slate-800/80 space-y-2.5 mt-3">
-                                        <div className="flex justify-between items-center">
-                                          <span className="text-[10px] font-bold text-slate-350 uppercase tracking-wider">Ajustar Tamanho do Ícone</span>
-                                          <span className="text-xs font-mono font-bold text-[#009c3b] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                                            {card.iconSize || 32}px
-                                          </span>
-                                        </div>
+                                {/* Ajustar Tamanho do Ícone */}
+                                <div className="bg-black/45 p-3 rounded-xl border border-slate-800/80 space-y-2.5 mt-3">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-slate-350 uppercase tracking-wider">
+                                      Ajustar Tamanho do Ícone
+                                    </span>
+                                    <span className="text-xs font-mono font-bold text-[#009c3b] bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                                      {card.iconSize || 32}px
+                                    </span>
+                                  </div>
 
-                                        {/* Range Slider */}
-                                        <div className="space-y-1 bg-slate-950/40 p-2 rounded-lg border border-slate-850">
-                                          <div className="flex justify-between items-center text-[9px] text-slate-500 font-bold">
-                                            <span>ARRASTE PARA DEFINIR O TAMANHO:</span>
-                                          </div>
-                                          <input
-                                            type="range"
-                                            min="16"
-                                            max="256"
-                                            step="2"
-                                            value={card.iconSize || 32}
-                                            onChange={(e) => updateCard(idx, { iconSize: Number(e.target.value) })}
-                                            className="w-full accent-[#009c3b] cursor-pointer h-1.5 bg-slate-900 rounded-lg outline-none"
-                                          />
-                                        </div>
+                                  {/* Range Slider */}
+                                  <div className="space-y-1 bg-slate-950/40 p-2 rounded-lg border border-slate-850">
+                                    <div className="flex justify-between items-center text-[9px] text-slate-500 font-bold">
+                                      <span>
+                                        ARRASTE PARA DEFINIR O TAMANHO:
+                                      </span>
+                                    </div>
+                                    <input
+                                      type="range"
+                                      min="16"
+                                      max="256"
+                                      step="2"
+                                      value={card.iconSize || 32}
+                                      onChange={(e) =>
+                                        updateCard(idx, {
+                                          iconSize: Number(e.target.value),
+                                        })
+                                      }
+                                      className="w-full accent-[#009c3b] cursor-pointer h-1.5 bg-slate-900 rounded-lg outline-none"
+                                    />
+                                  </div>
 
-                                        {/* Quick Selection Buttons */}
-                                        <div className="flex flex-wrap items-center gap-1">
-                                          {[
-                                            { label: "P (16px)", val: 16 },
-                                            { label: "M (32px)", val: 32 },
-                                            { label: "G (48px)", val: 48 },
-                                            { label: "GG (64px)", val: 64 },
-                                            { label: "EEG (96px)", val: 96 },
-                                            { label: "Giga (128px)", val: 128 },
-                                            { label: "Colo (192px)", val: 192 }
-                                          ].map((sz) => (
-                                            <button
-                                              key={sz.val}
-                                              type="button"
-                                              onClick={() => updateCard(idx, { iconSize: sz.val })}
-                                              className={`px-1.5 py-1 rounded text-[9px] font-bold border transition-all ${
-                                                (card.iconSize || 32) === sz.val 
-                                                  ? "border-[#009c3b] bg-[#009c3b]/10 text-white font-bold" 
-                                                  : "border-slate-800 bg-slate-900 text-slate-450 hover:text-slate-200"
-                                              }`}
-                                            >
-                                              {sz.label}
-                                            </button>
-                                          ))}
-                                        </div>
-                                      </div>
+                                  {/* Quick Selection Buttons */}
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    {[
+                                      { label: "P (16px)", val: 16 },
+                                      { label: "M (32px)", val: 32 },
+                                      { label: "G (48px)", val: 48 },
+                                      { label: "GG (64px)", val: 64 },
+                                      { label: "EEG (96px)", val: 96 },
+                                      { label: "Giga (128px)", val: 128 },
+                                      { label: "Colo (192px)", val: 192 },
+                                    ].map((sz) => (
+                                      <button
+                                        key={sz.val}
+                                        type="button"
+                                        onClick={() =>
+                                          updateCard(idx, { iconSize: sz.val })
+                                        }
+                                        className={`px-1.5 py-1 rounded text-[9px] font-bold border transition-all ${
+                                          (card.iconSize || 32) === sz.val
+                                            ? "border-[#009c3b] bg-[#009c3b]/10 text-white font-bold"
+                                            : "border-slate-800 bg-slate-900 text-slate-450 hover:text-slate-200"
+                                        }`}
+                                      >
+                                        {sz.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -2018,7 +2463,7 @@ function HomepageContentManager() {
               })}
             </div>
           </div>
-          
+
           {/* Main Action Bar */}
           <div className="flex gap-3 pt-3 border-t border-slate-800 justify-end font-sans">
             <button
@@ -2033,7 +2478,7 @@ function HomepageContentManager() {
         </div>
 
         {/* Right Column (Visual Mock Preview/Dashboard) */}
-        <div 
+        <div
           className="lg:col-span-5 bg-[#050B14] p-5 rounded-2xl border border-slate-800/80 h-fit space-y-5 select-none mt-4 lg:mt-0 lg:sticky lg:top-6"
           onContextMenu={(e) => e.preventDefault()}
           style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
@@ -2041,28 +2486,40 @@ function HomepageContentManager() {
           <span className="text-[10px] font-black uppercase text-[#009c3b] tracking-wider block mb-1">
             Visualização dos Atalhos da Home
           </span>
-          
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-sans">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-sans">
             {cards.map((c, i) => {
               const miniIcon = c.iconBase64 || c.iconUrl;
               const displaySize = (c.iconSize || 32) * 0.625;
 
               return (
-                <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-left">
+                <div
+                  key={i}
+                  className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-left"
+                >
                   <div className="flex items-center gap-3">
                     {miniIcon && (
-                      <div className={`p-1.5 rounded-lg bg-black/40 flex items-center justify-center shrink-0 ${c.color || "text-[#009c3b]"}`}>
-                        <img 
-                          src={miniIcon} 
-                          alt="" 
-                          className="object-contain rounded" 
-                          style={{ width: `${displaySize}px`, height: `${displaySize}px` }}
+                      <div
+                        className={`p-1.5 rounded-lg bg-black/40 flex items-center justify-center shrink-0 ${c.color || "text-[#009c3b]"}`}
+                      >
+                        <img
+                          src={miniIcon || undefined}
+                          alt=""
+                          className="object-contain rounded"
+                          style={{
+                            width: `${displaySize}px`,
+                            height: `${displaySize}px`,
+                          }}
                         />
                       </div>
                     )}
                     <div>
-                      <span className="font-black italic uppercase tracking-tighter text-white text-xs block">{c.title || "(Sem Título)"}</span>
-                      <span className="text-[10px] text-slate-400 line-clamp-1 leading-normal">{c.desc}</span>
+                      <span className="font-black italic uppercase tracking-tighter text-white text-xs block">
+                        {c.title || "(Sem Título)"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 line-clamp-1 leading-normal">
+                        {c.desc}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2070,51 +2527,67 @@ function HomepageContentManager() {
             })}
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
 function AppBrandingManager() {
-  const [authTitle, setAuthTitle] = useState("Portal de Resultados & Arbitragem");
-  const [authHelpText, setAuthHelpText] = useState("Dúvidas ou problemas? Contate a comissão GYMSTARS BRASIL.");
-  
+  const [authTitle, setAuthTitle] = useState(
+    "Portal de Resultados & Arbitragem",
+  );
+  const [authHelpText, setAuthHelpText] = useState(
+    "Dúvidas ou problemas? Contate a comissão GYMSTARS BRASIL.",
+  );
+
   // Custom Logos configurations
-  const [sidebarLogoType, setSidebarLogoType] = useState<"default" | "upload" | "url">("default");
+  const [sidebarLogoType, setSidebarLogoType] = useState<
+    "default" | "upload" | "url"
+  >("default");
   const [sidebarLogoBase64, setSidebarLogoBase64] = useState("");
   const [sidebarLogoUrl, setSidebarLogoUrl] = useState("");
   const [sidebarLogoHeight, setSidebarLogoHeight] = useState<number>(20);
 
-  const [mobileLogoType, setMobileLogoType] = useState<"default" | "upload" | "url">("default");
+  const [mobileLogoType, setMobileLogoType] = useState<
+    "default" | "upload" | "url"
+  >("default");
   const [mobileLogoBase64, setMobileLogoBase64] = useState("");
   const [mobileLogoUrl, setMobileLogoUrl] = useState("");
   const [mobileLogoHeight, setMobileLogoHeight] = useState<number>(20);
 
-  const [authLogoType, setAuthLogoType] = useState<"default" | "upload" | "url">("default");
+  const [authLogoType, setAuthLogoType] = useState<
+    "default" | "upload" | "url"
+  >("default");
   const [authLogoBase64, setAuthLogoBase64] = useState("");
   const [authLogoUrl, setAuthLogoUrl] = useState("");
   const [authLogoHeight, setAuthLogoHeight] = useState<number>(40);
 
   const [feedLogoBase64, setFeedLogoBase64] = useState("");
   const [feedLogoUrl, setFeedLogoUrl] = useState("");
-  const [feedLogoType, setFeedLogoType] = useState<"default" | "upload" | "url">("default");
+  const [feedLogoType, setFeedLogoType] = useState<
+    "default" | "upload" | "url"
+  >("default");
 
   const [menuIcons, setMenuIcons] = useState<Record<string, string>>({});
   const [menuIconsSize, setMenuIconsSize] = useState<number>(24);
 
-  const [apparatusIcons, setApparatusIcons] = useState<Record<string, string>>({});
+  const [apparatusIcons, setApparatusIcons] = useState<Record<string, string>>(
+    {},
+  );
   const [apparatusNames, setApparatusNames] = useState<Record<string, string>>({
     solo: "Solo",
     salto: "Salto",
     paralelas: "Paralelas Assimétricas",
-    trave: "Trave"
+    trave: "Trave",
   });
   const [apparatusIconsSize, setApparatusIconsSize] = useState<number>(44);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
     getDoc(doc(db, "appContent", "branding"))
@@ -2123,15 +2596,21 @@ function AppBrandingManager() {
           const data = snap.data();
           if (data.authTitle) setAuthTitle(data.authTitle);
           if (data.authHelpText) setAuthHelpText(data.authHelpText);
-          if (data.sidebarLogoHeight) setSidebarLogoHeight(Number(data.sidebarLogoHeight) || 20);
-          if (data.mobileLogoHeight) setMobileLogoHeight(Number(data.mobileLogoHeight) || 20);
-          if (data.authLogoHeight) setAuthLogoHeight(Number(data.authLogoHeight) || 40);
+          if (data.sidebarLogoHeight)
+            setSidebarLogoHeight(Number(data.sidebarLogoHeight) || 20);
+          if (data.mobileLogoHeight)
+            setMobileLogoHeight(Number(data.mobileLogoHeight) || 20);
+          if (data.authLogoHeight)
+            setAuthLogoHeight(Number(data.authLogoHeight) || 40);
           if (data.menuIcons) setMenuIcons(data.menuIcons);
-          if (data.menuIconsSize) setMenuIconsSize(Number(data.menuIconsSize) || 24);
+          if (data.menuIconsSize)
+            setMenuIconsSize(Number(data.menuIconsSize) || 24);
           if (data.apparatusIcons) setApparatusIcons(data.apparatusIcons);
-          if (data.apparatusNames) setApparatusNames(prev => ({ ...prev, ...data.apparatusNames }));
-          if (data.apparatusIconsSize) setApparatusIconsSize(Number(data.apparatusIconsSize) || 44);
-          
+          if (data.apparatusNames)
+            setApparatusNames((prev) => ({ ...prev, ...data.apparatusNames }));
+          if (data.apparatusIconsSize)
+            setApparatusIconsSize(Number(data.apparatusIconsSize) || 44);
+
           if (data.sidebarLogoBase64) {
             setSidebarLogoBase64(data.sidebarLogoBase64);
             setSidebarLogoType("upload");
@@ -2185,7 +2664,10 @@ function AppBrandingManager() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleImageUpload = (section: "sidebar" | "mobile" | "auth" | "feed", e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (
+    section: "sidebar" | "mobile" | "auth" | "feed",
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -2217,7 +2699,7 @@ function AppBrandingManager() {
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
           const compressed = canvas.toDataURL("image/png", 0.82);
-          
+
           if (section === "sidebar") {
             setSidebarLogoBase64(compressed);
             setSidebarLogoType("upload");
@@ -2239,7 +2721,10 @@ function AppBrandingManager() {
     reader.readAsDataURL(file);
   };
 
-  const handleMenuIconUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMenuIconUpload = (
+    key: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -2270,7 +2755,7 @@ function AppBrandingManager() {
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
           const compressed = canvas.toDataURL("image/png", 0.9);
-          setMenuIcons(prev => ({ ...prev, [key]: compressed }));
+          setMenuIcons((prev) => ({ ...prev, [key]: compressed }));
           showToast(`Ícone para ${key} carregado!`, "success");
         }
       };
@@ -2279,7 +2764,10 @@ function AppBrandingManager() {
     reader.readAsDataURL(file);
   };
 
-  const handleApparatusIconUpload = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleApparatusIconUpload = (
+    key: string,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -2310,7 +2798,7 @@ function AppBrandingManager() {
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
           const compressed = canvas.toDataURL("image/png", 0.9);
-          setApparatusIcons(prev => ({ ...prev, [key]: compressed }));
+          setApparatusIcons((prev) => ({ ...prev, [key]: compressed }));
           showToast(`Ícone de aparelho para ${key} carregado!`, "success");
         }
       };
@@ -2327,7 +2815,8 @@ function AppBrandingManager() {
         title: "Personalização de Visual & Autenticação",
         authTitle: authTitle.trim(),
         authHelpText: authHelpText.trim(),
-        sidebarLogoBase64: sidebarLogoType === "upload" ? sidebarLogoBase64 : "",
+        sidebarLogoBase64:
+          sidebarLogoType === "upload" ? sidebarLogoBase64 : "",
         sidebarLogoUrl: sidebarLogoType === "url" ? sidebarLogoUrl.trim() : "",
         sidebarLogoHeight: sidebarLogoHeight,
         mobileLogoBase64: mobileLogoType === "upload" ? mobileLogoBase64 : "",
@@ -2343,11 +2832,14 @@ function AppBrandingManager() {
         apparatusIcons,
         apparatusNames,
         apparatusIconsSize,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       };
 
       await setDoc(doc(db, "appContent", "branding"), payload);
-      showToast("Configurações de logos e tela de login atualizadas em tempo real!", "success");
+      showToast(
+        "Configurações de logos e tela de login atualizadas em tempo real!",
+        "success",
+      );
     } catch (e: any) {
       showToast("Erro ao salvar: " + e.message, "error");
     } finally {
@@ -2356,12 +2848,19 @@ function AppBrandingManager() {
   };
 
   const restoreBrandingDefault = async () => {
-    if (!window.confirm("Deseja mesmo restaurar todas as logos e textos de login para a configuração original?")) return;
+    if (
+      !window.confirm(
+        "Deseja mesmo restaurar todas as logos e textos de login para a configuração original?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       await deleteDoc(doc(db, "appContent", "branding"));
       setAuthTitle("Portal de Resultados & Arbitragem");
-      setAuthHelpText("Dúvidas ou problemas? Contate a comissão GYMSTARS BRASIL.");
+      setAuthHelpText(
+        "Dúvidas ou problemas? Contate a comissão GYMSTARS BRASIL.",
+      );
       setSidebarLogoType("default");
       setSidebarLogoBase64("");
       setSidebarLogoUrl("");
@@ -2379,12 +2878,15 @@ function AppBrandingManager() {
         solo: "Solo",
         salto: "Salto",
         paralelas: "Paralelas Assimétricas",
-        trave: "Trave"
+        trave: "Trave",
       });
       setAuthLogoBase64("");
       setAuthLogoUrl("");
       setAuthLogoHeight(40);
-      showToast("Logos e layouts restaurados para o padrão do sistema!", "success");
+      showToast(
+        "Logos e layouts restaurados para o padrão do sistema!",
+        "success",
+      );
     } catch (e: any) {
       showToast("Erro ao restaurar: " + e.message, "error");
     } finally {
@@ -2403,7 +2905,8 @@ function AppBrandingManager() {
             Personalizar Logos e Tela de Login/Cadastro
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Modifique independentemente as logos do menu lateral (Desktop), cabeçalho (Mobile) e customize textos/logos da tela de login
+            Modifique independentemente as logos do menu lateral (Desktop),
+            cabeçalho (Mobile) e customize textos/logos da tela de login
           </p>
         </div>
         <button
@@ -2417,22 +2920,29 @@ function AppBrandingManager() {
       </div>
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl flex items-center gap-3 text-sm font-bold shadow-2xl border animate-fade-in ${
-          toast.type === "success" 
-            ? "bg-slate-950 border-green-500/40 text-green-400" 
-            : "bg-slate-950 border-red-500/40 text-red-400"
-        }`}>
-          <div className={`w-2.5 h-2.5 rounded-full ${toast.type === "success" ? "bg-green-500" : "bg-red-500"} animate-ping shrink-0`} />
+        <div
+          className={`fixed bottom-6 right-6 z-[9999] p-4 rounded-2xl flex items-center gap-3 text-sm font-bold shadow-2xl border animate-fade-in ${
+            toast.type === "success"
+              ? "bg-slate-950 border-green-500/40 text-green-400"
+              : "bg-slate-950 border-red-500/40 text-red-400"
+          }`}
+        >
+          <div
+            className={`w-2.5 h-2.5 rounded-full ${toast.type === "success" ? "bg-green-500" : "bg-red-500"} animate-ping shrink-0`}
+          />
           <span>{toast.text}</span>
-          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white ml-2 text-xs font-normal transition-colors">✕</button>
+          <button
+            onClick={() => setToast(null)}
+            className="text-slate-400 hover:text-white ml-2 text-xs font-normal transition-colors"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
         {/* Left Form controls */}
         <div className="lg:col-span-7 space-y-5">
-          
           {/* Logo Menu Lateral Desktop */}
           <div className="bg-black/30 p-4 rounded-2xl border border-slate-800/60 space-y-3 font-sans">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
@@ -2443,7 +2953,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setSidebarLogoType("default")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  sidebarLogoType === "default" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  sidebarLogoType === "default"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Padrão (Fixo)
@@ -2452,7 +2964,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setSidebarLogoType("upload")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  sidebarLogoType === "upload" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  sidebarLogoType === "upload"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Upload PNG
@@ -2461,7 +2975,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setSidebarLogoType("url")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  sidebarLogoType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  sidebarLogoType === "url"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 URL Direta
@@ -2482,8 +2998,14 @@ function AppBrandingManager() {
                 </label>
                 {sidebarLogoBase64 && (
                   <div className="bg-black/40 border border-slate-800 p-2 rounded-xl flex flex-col items-center">
-                    <img src={sidebarLogoBase64} alt="Design preview" className="h-8 object-contain" />
-                    <span className="text-[8px] text-slate-500 mt-1">Prévia Otimizada</span>
+                    <img
+                      src={sidebarLogoBase64 || undefined}
+                      alt="Design preview"
+                      className="h-8 object-contain"
+                    />
+                    <span className="text-[8px] text-slate-500 mt-1">
+                      Prévia Otimizada
+                    </span>
                   </div>
                 )}
               </div>
@@ -2502,7 +3024,9 @@ function AppBrandingManager() {
             {sidebarLogoType !== "default" && (
               <div className="bg-black/45 p-3.5 rounded-xl border border-slate-800/80 space-y-3 mt-2 font-sans">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Ajustar Altura da Logo do Menu</span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                    Ajustar Altura da Logo do Menu
+                  </span>
                   <span className="text-xs font-mono font-bold text-indigo-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
                     {sidebarLogoHeight}px
                   </span>
@@ -2512,7 +3036,9 @@ function AppBrandingManager() {
                 <div className="space-y-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
                   <div className="flex justify-between items-center text-[10px] text-slate-450 font-bold">
                     <span>ARRASTE PARA REDIMENSIONAR LIVREMENTE:</span>
-                    <span className="text-indigo-400 font-mono">{sidebarLogoHeight}px</span>
+                    <span className="text-indigo-400 font-mono">
+                      {sidebarLogoHeight}px
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -2520,7 +3046,9 @@ function AppBrandingManager() {
                     max="500"
                     step="2"
                     value={sidebarLogoHeight}
-                    onChange={(e) => setSidebarLogoHeight(Number(e.target.value))}
+                    onChange={(e) =>
+                      setSidebarLogoHeight(Number(e.target.value))
+                    }
                     className="w-full accent-indigo-550 cursor-pointer h-1.5 bg-slate-900 rounded-lg outline-none"
                   />
                 </div>
@@ -2528,14 +3056,18 @@ function AppBrandingManager() {
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <button
                     type="button"
-                    onClick={() => setSidebarLogoHeight(Math.max(10, sidebarLogoHeight - 2))}
+                    onClick={() =>
+                      setSidebarLogoHeight(Math.max(10, sidebarLogoHeight - 2))
+                    }
                     className="p-1 bg-slate-850 text-white rounded font-bold w-7 h-7 flex items-center justify-center border border-slate-700 hover:bg-slate-700"
                   >
                     -
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSidebarLogoHeight(Math.min(500, sidebarLogoHeight + 2))}
+                    onClick={() =>
+                      setSidebarLogoHeight(Math.min(500, sidebarLogoHeight + 2))
+                    }
                     className="p-1 bg-slate-850 text-white rounded font-bold w-7 h-7 flex items-center justify-center border border-slate-700 hover:bg-slate-700"
                   >
                     +
@@ -2605,7 +3137,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setMobileLogoType("default")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  mobileLogoType === "default" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  mobileLogoType === "default"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Padrão (Fixo)
@@ -2614,7 +3148,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setMobileLogoType("upload")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  mobileLogoType === "upload" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  mobileLogoType === "upload"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Upload PNG
@@ -2623,7 +3159,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setMobileLogoType("url")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  mobileLogoType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  mobileLogoType === "url"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 URL Direta
@@ -2644,8 +3182,14 @@ function AppBrandingManager() {
                 </label>
                 {mobileLogoBase64 && (
                   <div className="bg-black/40 border border-slate-800 p-2 rounded-xl flex flex-col items-center">
-                    <img src={mobileLogoBase64} alt="Header preview" className="h-6 object-contain" />
-                    <span className="text-[8px] text-slate-500 mt-1">Prévia Otimizada</span>
+                    <img
+                      src={mobileLogoBase64 || undefined}
+                      alt="Header preview"
+                      className="h-6 object-contain"
+                    />
+                    <span className="text-[8px] text-slate-500 mt-1">
+                      Prévia Otimizada
+                    </span>
                   </div>
                 )}
               </div>
@@ -2664,7 +3208,9 @@ function AppBrandingManager() {
             {mobileLogoType !== "default" && (
               <div className="bg-black/45 p-3.5 rounded-xl border border-slate-800/80 space-y-3 mt-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Ajustar Altura da Logo Mobile</span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                    Ajustar Altura da Logo Mobile
+                  </span>
                   <span className="text-xs font-mono font-bold text-indigo-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
                     {mobileLogoHeight}px
                   </span>
@@ -2674,7 +3220,9 @@ function AppBrandingManager() {
                 <div className="space-y-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
                   <div className="flex justify-between items-center text-[10px] text-slate-450 font-bold">
                     <span>ARRASTE PARA REDIMENSIONAR LIVREMENTE:</span>
-                    <span className="text-indigo-400 font-mono">{mobileLogoHeight}px</span>
+                    <span className="text-indigo-400 font-mono">
+                      {mobileLogoHeight}px
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -2682,7 +3230,9 @@ function AppBrandingManager() {
                     max="400"
                     step="2"
                     value={mobileLogoHeight}
-                    onChange={(e) => setMobileLogoHeight(Number(e.target.value))}
+                    onChange={(e) =>
+                      setMobileLogoHeight(Number(e.target.value))
+                    }
                     className="w-full accent-indigo-550 cursor-pointer h-1.5 bg-slate-900 rounded-lg outline-none"
                   />
                 </div>
@@ -2690,14 +3240,18 @@ function AppBrandingManager() {
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <button
                     type="button"
-                    onClick={() => setMobileLogoHeight(Math.max(10, mobileLogoHeight - 2))}
+                    onClick={() =>
+                      setMobileLogoHeight(Math.max(10, mobileLogoHeight - 2))
+                    }
                     className="p-1 bg-slate-850 text-white rounded font-bold w-7 h-7 flex items-center justify-center border border-slate-700 hover:bg-slate-700"
                   >
                     -
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMobileLogoHeight(Math.min(400, mobileLogoHeight + 2))}
+                    onClick={() =>
+                      setMobileLogoHeight(Math.min(400, mobileLogoHeight + 2))
+                    }
                     className="p-1 bg-slate-850 text-white rounded font-bold w-7 h-7 flex items-center justify-center border border-slate-700 hover:bg-slate-700"
                   >
                     +
@@ -2755,13 +3309,18 @@ function AppBrandingManager() {
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
               Foto de Perfil do Mural (Postador Oficial)
             </label>
-            <p className="text-[10px] text-slate-500 mb-2">Configure a foto que aparecerá ao lado do nome GYMSTARS BRASIL em cada post oficial.</p>
+            <p className="text-[10px] text-slate-500 mb-2">
+              Configure a foto que aparecerá ao lado do nome GYMSTARS BRASIL em
+              cada post oficial.
+            </p>
             <div className="flex gap-2 p-1 bg-black/40 rounded-xl max-w-sm">
               <button
                 type="button"
                 onClick={() => setFeedLogoType("default")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  feedLogoType === "default" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  feedLogoType === "default"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Vetor SVG
@@ -2770,7 +3329,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setFeedLogoType("upload")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  feedLogoType === "upload" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  feedLogoType === "upload"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Upload PNG
@@ -2779,7 +3340,9 @@ function AppBrandingManager() {
                 type="button"
                 onClick={() => setFeedLogoType("url")}
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  feedLogoType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                  feedLogoType === "url"
+                    ? "bg-indigo-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 URL Direta
@@ -2800,8 +3363,14 @@ function AppBrandingManager() {
                 </label>
                 {feedLogoBase64 && (
                   <div className="bg-black/40 border border-slate-800 p-2 rounded-xl flex flex-col items-center">
-                    <img src={feedLogoBase64} alt="Feed profil preview" className="w-8 h-8 rounded-full object-cover" />
-                    <span className="text-[8px] text-slate-500 mt-1">Perfil (300px)</span>
+                    <img
+                      src={feedLogoBase64 || undefined}
+                      alt="Feed profil preview"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <span className="text-[8px] text-slate-500 mt-1">
+                      Perfil (300px)
+                    </span>
                   </div>
                 )}
               </div>
@@ -2826,13 +3395,17 @@ function AppBrandingManager() {
 
             {/* Auth Page Logo Option */}
             <div className="space-y-2">
-              <span className="block text-[11px] text-slate-400 uppercase tracking-widest font-bold">Logo da Tela de Autenticação</span>
+              <span className="block text-[11px] text-slate-400 uppercase tracking-widest font-bold">
+                Logo da Tela de Autenticação
+              </span>
               <div className="flex gap-2 p-1 bg-black/40 rounded-xl max-w-sm">
                 <button
                   type="button"
                   onClick={() => setAuthLogoType("default")}
                   className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    authLogoType === "default" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                    authLogoType === "default"
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-400 hover:text-white"
                   }`}
                 >
                   Padrão (Fixo)
@@ -2841,7 +3414,9 @@ function AppBrandingManager() {
                   type="button"
                   onClick={() => setAuthLogoType("upload")}
                   className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    authLogoType === "upload" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                    authLogoType === "upload"
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-400 hover:text-white"
                   }`}
                 >
                   Upload PNG
@@ -2850,7 +3425,9 @@ function AppBrandingManager() {
                   type="button"
                   onClick={() => setAuthLogoType("url")}
                   className={`flex-1 text-center py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    authLogoType === "url" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white"
+                    authLogoType === "url"
+                      ? "bg-indigo-600 text-white"
+                      : "text-slate-400 hover:text-white"
                   }`}
                 >
                   URL Direta
@@ -2871,8 +3448,14 @@ function AppBrandingManager() {
                   </label>
                   {authLogoBase64 && (
                     <div className="bg-black/40 border border-slate-800 p-2 rounded-xl flex flex-col items-center">
-                      <img src={authLogoBase64} alt="Auth preview" className="h-8 object-contain" />
-                      <span className="text-[8px] text-slate-500 mt-1">Prévia Otimizada</span>
+                      <img
+                        src={authLogoBase64 || undefined}
+                        alt="Auth preview"
+                        className="h-8 object-contain"
+                      />
+                      <span className="text-[8px] text-slate-500 mt-1">
+                        Prévia Otimizada
+                      </span>
                     </div>
                   )}
                 </div>
@@ -2891,7 +3474,9 @@ function AppBrandingManager() {
               {authLogoType !== "default" && (
                 <div className="bg-black/45 p-3.5 rounded-xl border border-slate-800/80 space-y-3 mt-2 font-sans">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Ajustar Altura da Logo de Auth</span>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+                      Ajustar Altura da Logo de Auth
+                    </span>
                     <span className="text-xs font-mono font-bold text-indigo-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
                       {authLogoHeight}px
                     </span>
@@ -2901,7 +3486,9 @@ function AppBrandingManager() {
                   <div className="space-y-1 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
                     <div className="flex justify-between items-center text-[10px] text-slate-450 font-bold">
                       <span>ARRASTE PARA REDIMENSIONAR LIVREMENTE:</span>
-                      <span className="text-indigo-400 font-mono">{authLogoHeight}px</span>
+                      <span className="text-indigo-400 font-mono">
+                        {authLogoHeight}px
+                      </span>
                     </div>
                     <input
                       type="range"
@@ -2909,7 +3496,9 @@ function AppBrandingManager() {
                       max="600"
                       step="4"
                       value={authLogoHeight}
-                      onChange={(e) => setAuthLogoHeight(Number(e.target.value))}
+                      onChange={(e) =>
+                        setAuthLogoHeight(Number(e.target.value))
+                      }
                       className="w-full accent-indigo-550 cursor-pointer h-1.5 bg-slate-900 rounded-lg outline-none"
                     />
                   </div>
@@ -2917,14 +3506,18 @@ function AppBrandingManager() {
                   <div className="flex flex-wrap items-center gap-1.5 text-xs">
                     <button
                       type="button"
-                      onClick={() => setAuthLogoHeight(Math.max(20, authLogoHeight - 4))}
+                      onClick={() =>
+                        setAuthLogoHeight(Math.max(20, authLogoHeight - 4))
+                      }
                       className="p-1 bg-slate-850 text-white rounded font-bold w-7 h-7 flex items-center justify-center border border-slate-700 hover:bg-slate-700"
                     >
                       -
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAuthLogoHeight(Math.min(600, authLogoHeight + 4))}
+                      onClick={() =>
+                        setAuthLogoHeight(Math.min(600, authLogoHeight + 4))
+                      }
                       className="p-1 bg-slate-850 text-white rounded font-bold w-7 h-7 flex items-center justify-center border border-slate-700 hover:bg-slate-700"
                     >
                       +
@@ -2987,7 +3580,9 @@ function AppBrandingManager() {
             {/* Custom texts for Auth Title and Custom help contacts */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1.5">Identificação / Subtítulo</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1.5">
+                  Identificação / Subtítulo
+                </label>
                 <input
                   type="text"
                   value={authTitle}
@@ -2996,9 +3591,11 @@ function AppBrandingManager() {
                   className="w-full bg-black/45 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-xs focus:border-[#009c3b] focus:outline-none"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1.5">Texto de Rodapé da Página</label>
+                <label className="block text-xs font-bold text-slate-400 mb-1.5">
+                  Texto de Rodapé da Página
+                </label>
                 <input
                   type="text"
                   value={authHelpText}
@@ -3012,137 +3609,175 @@ function AppBrandingManager() {
 
           {/* Custom Menu Icons */}
           <div className="bg-black/30 p-4 rounded-2xl border border-slate-800/60 space-y-3 font-sans mt-6">
-             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 border-b border-slate-800 pb-2">
-                Ícones Customizados do Menu (Início, Bate-papo, etc)
-             </label>
-             <p className="text-[10px] text-slate-400 mb-4 leading-relaxed">
-               Faça upload de ícones em PNG de alta qualidade para substituir os símbolos das páginas.
-             </p>
-             <div className="mb-4 bg-black/40 border border-slate-800/60 rounded-xl p-3 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-300">Tamanho dos Ícones (px)</span>
-                <input
-                  type="number"
-                  min="16"
-                  max="48"
-                  value={menuIconsSize}
-                  onChange={(e) => setMenuIconsSize(Number(e.target.value))}
-                  className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-sm text-center text-white focus:outline-none focus:border-indigo-500"
-                />
-             </div>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               {[
-                 { id: "inicio", label: "Início" },
-                 { id: "quemSomos", label: "Quem Somos" },
-                 { id: "competicoes", label: "Competições" },
-                 { id: "cursos", label: "Cursos" },
-                 { id: "codigo", label: "Código" },
-                 { id: "elementos", label: "Elementos" },
-                 { id: "ginastas", label: "Ginastas" },
-                 { id: "batePapo", label: "Bate-papo" },
-                 { id: "arbitragem", label: "Arbitragem" },
-                 { id: "admin", label: "Painel Adm." }
-               ].map((item) => (
-                 <div key={item.id} className="flex items-center justify-between bg-black/40 border border-slate-800/60 rounded-xl p-3">
-                   <div className="flex items-center gap-3">
-                     <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 p-1">
-                       {menuIcons[item.id] ? (
-                         <img src={menuIcons[item.id]} alt="" className="w-full h-full object-contain" />
-                       ) : (
-                         <span className="text-[9px] text-slate-600 font-bold">Vazio</span>
-                       )}
-                     </div>
-                     <span className="text-xs font-bold text-slate-300">{item.label}</span>
-                   </div>
-                   <label className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all uppercase tracking-wider">
-                     {menuIcons[item.id] ? "Trocar" : "Upload"}
-                     <input
-                       type="file"
-                       accept="image/*"
-                       onChange={(e) => handleMenuIconUpload(item.id, e)}
-                       className="hidden"
-                     />
-                   </label>
-                 </div>
-               ))}
-             </div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 border-b border-slate-800 pb-2">
+              Ícones Customizados do Menu (Início, Bate-papo, etc)
+            </label>
+            <p className="text-[10px] text-slate-400 mb-4 leading-relaxed">
+              Faça upload de ícones em PNG de alta qualidade para substituir os
+              símbolos das páginas.
+            </p>
+            <div className="mb-4 bg-black/40 border border-slate-800/60 rounded-xl p-3 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-300">
+                Tamanho dos Ícones (px)
+              </span>
+              <input
+                type="number"
+                min="16"
+                max="48"
+                value={menuIconsSize}
+                onChange={(e) => setMenuIconsSize(Number(e.target.value))}
+                className="w-20 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-sm text-center text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { id: "inicio", label: "Início" },
+                { id: "quemSomos", label: "Quem Somos" },
+                { id: "competicoes", label: "Competições" },
+                { id: "cursos", label: "Cursos" },
+                { id: "codigo", label: "Código" },
+                { id: "elementos", label: "Elementos" },
+                { id: "ginastas", label: "Ginastas" },
+                { id: "batePapo", label: "Bate-papo" },
+                { id: "arbitragem", label: "Arbitragem" },
+                { id: "admin", label: "Painel Adm." },
+              ].map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between bg-black/40 border border-slate-800/60 rounded-xl p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 p-1">
+                      {menuIcons[item.id] ? (
+                        <img
+                          src={menuIcons[item.id] || undefined}
+                          alt=""
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-[9px] text-slate-600 font-bold">
+                          Vazio
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs font-bold text-slate-300">
+                      {item.label}
+                    </span>
+                  </div>
+                  <label className="bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-all uppercase tracking-wider">
+                    {menuIcons[item.id] ? "Trocar" : "Upload"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleMenuIconUpload(item.id, e)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
 
-              {/* Apparatuses Customizer */}
-              <div className="bg-black/30 p-4 rounded-2xl border border-slate-800/60 space-y-3 font-sans mt-6">
-                 <label className="block text-xs font-bold uppercase tracking-wider text-[#00a84c] mb-2 border-b border-slate-800 pb-2 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#00a84c]"></span>
-                    Categoria das Fichas de Elementos (Aparelhos)
-                 </label>
-                 <p className="text-[10px] text-slate-400 mb-4 leading-relaxed">
-                    Personalize os nomes de exibição, envie ícones cristalinos de alta definição em arquivos PNG e controle a escala milimétrica do tamanho dos ícones na listagem geral.
-                 </p>
+          {/* Apparatuses Customizer */}
+          <div className="bg-black/30 p-4 rounded-2xl border border-slate-800/60 space-y-3 font-sans mt-6">
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#00a84c] mb-2 border-b border-slate-800 pb-2 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#00a84c]"></span>
+              Categoria das Fichas de Elementos (Aparelhos)
+            </label>
+            <p className="text-[10px] text-slate-400 mb-4 leading-relaxed">
+              Personalize os nomes de exibição, envie ícones cristalinos de alta
+              definição em arquivos PNG e controle a escala milimétrica do
+              tamanho dos ícones na listagem geral.
+            </p>
 
-                 {/* Icon Size Slider */}
-                 <div className="bg-black/20 border border-slate-800/50 rounded-xl p-3 mb-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                       <span className="text-[11px] font-bold text-slate-300 font-sans">Tamanho de exibição dos ícones dos aparelhos</span>
-                       <span className="text-xs font-bold bg-indigo-500/15 text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 font-mono">{apparatusIconsSize || 44}px</span>
-                    </div>
-                    <input
-                       type="range"
-                       min="24"
-                       max="96"
-                       value={apparatusIconsSize || 44}
-                       onChange={(e) => setApparatusIconsSize(Number(e.target.value))}
-                       className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-indigo-500 focus:outline-none"
-                    />
-                    <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                       <span>Pequeno (24px)</span>
-                       <span>Médio (48px)</span>
-                       <span>Grande (96px)</span>
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   {[
-                     { id: "solo", defaultLabel: "Solo" },
-                     { id: "salto", defaultLabel: "Salto" },
-                     { id: "paralelas", defaultLabel: "Paralelas Assimétricas" },
-                     { id: "trave", defaultLabel: "Trave" }
-                   ].map((item) => (
-                     <div key={item.id} className="bg-black/40 border border-slate-800/60 rounded-xl p-3 space-y-3">
-                       <div className="flex items-center justify-between">
-                         <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Aparelho</span>
-                         <label className="bg-indigo-500/15 text-indigo-400 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all uppercase tracking-wider">
-                           {apparatusIcons[item.id] ? "Trocar" : "Upload"}
-                           <input
-                             type="file"
-                             accept="image/*"
-                             onChange={(e) => handleApparatusIconUpload(item.id, e)}
-                             className="hidden"
-                           />
-                         </label>
-                       </div>
-                       <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 p-1">
-                           {apparatusIcons[item.id] ? (
-                             <img src={apparatusIcons[item.id]} alt="" className="w-full h-full object-contain" />
-                           ) : (
-                             <span className="text-[9px] text-slate-600 font-bold font-mono">Sem Ícone</span>
-                           )}
-                         </div>
-                         <div className="flex-1">
-                           <input
-                             type="text"
-                             value={apparatusNames[item.id] !== undefined ? apparatusNames[item.id] : item.defaultLabel}
-                             onChange={(e) => {
-                               const val = e.target.value;
-                               setApparatusNames(prev => ({ ...prev, [item.id]: val }));
-                             }}
-                             placeholder={item.defaultLabel}
-                             className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
-                           />
-                         </div>
-                       </div>
-                     </div>
-                   ))}
-                 </div>
+            {/* Icon Size Slider */}
+            <div className="bg-black/20 border border-slate-800/50 rounded-xl p-3 mb-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-300 font-sans">
+                  Tamanho de exibição dos ícones dos aparelhos
+                </span>
+                <span className="text-xs font-bold bg-indigo-500/15 text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 font-mono">
+                  {apparatusIconsSize || 44}px
+                </span>
               </div>
+              <input
+                type="range"
+                min="24"
+                max="96"
+                value={apparatusIconsSize || 44}
+                onChange={(e) => setApparatusIconsSize(Number(e.target.value))}
+                className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-indigo-500 focus:outline-none"
+              />
+              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>Pequeno (24px)</span>
+                <span>Médio (48px)</span>
+                <span>Grande (96px)</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { id: "solo", defaultLabel: "Solo" },
+                { id: "salto", defaultLabel: "Salto" },
+                { id: "paralelas", defaultLabel: "Paralelas Assimétricas" },
+                { id: "trave", defaultLabel: "Trave" },
+              ].map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-black/40 border border-slate-800/60 rounded-xl p-3 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      Aparelho
+                    </span>
+                    <label className="bg-indigo-500/15 text-indigo-400 hover:bg-indigo-600 hover:text-white px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all uppercase tracking-wider">
+                      {apparatusIcons[item.id] ? "Trocar" : "Upload"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleApparatusIconUpload(item.id, e)}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 p-1">
+                      {apparatusIcons[item.id] ? (
+                        <img
+                          src={apparatusIcons[item.id] || undefined}
+                          alt=""
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-[9px] text-slate-600 font-bold font-mono">
+                          Sem Ícone
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={
+                          apparatusNames[item.id] !== undefined
+                            ? apparatusNames[item.id]
+                            : item.defaultLabel
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setApparatusNames((prev) => ({
+                            ...prev,
+                            [item.id]: val,
+                          }));
+                        }}
+                        placeholder={item.defaultLabel}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Action Bar */}
           <div className="flex justify-end pt-2 mt-6">
@@ -3154,7 +3789,6 @@ function AppBrandingManager() {
               {saving ? "Salvando..." : "Salvar Configurações Visuais"}
             </button>
           </div>
-
         </div>
 
         {/* Right Preview Column */}
@@ -3171,16 +3805,30 @@ function AppBrandingManager() {
             <div className="w-full max-w-[200px] border border-slate-800 bg-[#070F1C]/30 rounded-xl p-3 text-center space-y-3">
               <div className="flex flex-col items-center">
                 {authLogoType === "upload" && authLogoBase64 ? (
-                  <img src={authLogoBase64} alt="" style={{ height: `${authLogoHeight}px` }} className="object-contain" />
+                  <img
+                    src={authLogoBase64 || undefined}
+                    alt=""
+                    style={{ height: `${authLogoHeight}px` }}
+                    className="object-contain"
+                  />
                 ) : authLogoType === "url" && authLogoUrl ? (
-                  <img src={authLogoUrl} alt="" style={{ height: `${authLogoHeight}px` }} className="object-contain" />
+                  <img
+                    src={authLogoUrl || undefined}
+                    alt=""
+                    style={{ height: `${authLogoHeight}px` }}
+                    className="object-contain"
+                  />
                 ) : (
                   <div className="flex flex-col items-center">
                     <Star className="w-5 h-5 text-yellow-500 animate-spin-slow mb-0.5" />
-                    <div className="text-[8px] font-black text-white leading-none tracking-widest">GYMSTARS</div>
+                    <div className="text-[8px] font-black text-white leading-none tracking-widest">
+                      GYMSTARS
+                    </div>
                   </div>
                 )}
-                <span className="text-slate-400 text-[7px] font-black uppercase tracking-widest mt-1.5 leading-tight">{authTitle}</span>
+                <span className="text-slate-400 text-[7px] font-black uppercase tracking-widest mt-1.5 leading-tight">
+                  {authTitle}
+                </span>
               </div>
               <div className="h-3.5 bg-slate-900 border border-slate-850 rounded" />
               <div className="h-3.5 bg-slate-900 border border-slate-850 rounded" />
@@ -3198,18 +3846,32 @@ function AppBrandingManager() {
             <div className="flex items-center gap-2 bg-[#050B14] p-2 rounded-lg border border-slate-850">
               <div className="pr-2 border-r border-slate-800 py-0.5 max-w-[120px]">
                 {sidebarLogoType === "upload" && sidebarLogoBase64 ? (
-                  <img src={sidebarLogoBase64} alt="" style={{ height: `${sidebarLogoHeight}px` }} className="object-contain" />
+                  <img
+                    src={sidebarLogoBase64 || undefined}
+                    alt=""
+                    style={{ height: `${sidebarLogoHeight}px` }}
+                    className="object-contain"
+                  />
                 ) : sidebarLogoType === "url" && sidebarLogoUrl ? (
-                  <img src={sidebarLogoUrl} alt="" style={{ height: `${sidebarLogoHeight}px` }} className="object-contain" />
+                  <img
+                    src={sidebarLogoUrl || undefined}
+                    alt=""
+                    style={{ height: `${sidebarLogoHeight}px` }}
+                    className="object-contain"
+                  />
                 ) : (
                   <div className="flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 text-white shrink-0" />
-                    <span className="text-[7.5px] font-black text-white leading-none">GYMSTARS</span>
+                    <span className="text-[7.5px] font-black text-white leading-none">
+                      GYMSTARS
+                    </span>
                   </div>
                 )}
               </div>
               <div className="flex gap-1.5">
-                <span className="text-[7px] text-[#009c3b] font-bold">Home</span>
+                <span className="text-[7px] text-[#009c3b] font-bold">
+                  Home
+                </span>
                 <span className="text-[7px] text-slate-400">Feed</span>
               </div>
             </div>
@@ -3223,22 +3885,32 @@ function AppBrandingManager() {
             <div className="flex items-center justify-between bg-[#050B14] p-2 rounded-lg border border-slate-850">
               <div>
                 {mobileLogoType === "upload" && mobileLogoBase64 ? (
-                  <img src={mobileLogoBase64} alt="" style={{ height: `${mobileLogoHeight}px` }} className="object-contain" />
+                  <img
+                    src={mobileLogoBase64 || undefined}
+                    alt=""
+                    style={{ height: `${mobileLogoHeight}px` }}
+                    className="object-contain"
+                  />
                 ) : mobileLogoType === "url" && mobileLogoUrl ? (
-                  <img src={mobileLogoUrl} alt="" style={{ height: `${mobileLogoHeight}px` }} className="object-contain" />
+                  <img
+                    src={mobileLogoUrl || undefined}
+                    alt=""
+                    style={{ height: `${mobileLogoHeight}px` }}
+                    className="object-contain"
+                  />
                 ) : (
                   <div className="flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 text-white" />
-                    <span className="text-[7.5px] font-black text-white">GYMSTARS</span>
+                    <span className="text-[7.5px] font-black text-white">
+                      GYMSTARS
+                    </span>
                   </div>
                 )}
               </div>
               <div className="w-3 h-3 bg-slate-900 border border-slate-850 rounded-full" />
             </div>
           </div>
-
         </div>
-
       </div>
     </div>
   );
@@ -3261,28 +3933,32 @@ function AboutUsManager() {
     const q = query(
       collection(db, "appContent"),
       where("type", "==", "about_us_item"),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "asc"),
     );
-    const unsub = onSnapshot(q, (snap) => {
-      const docsData = snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          type: data.type || "about_us_item",
-          title: data.title || "",
-          description: data.description || "",
-          photoBase64: data.photoBase64 || "",
-          photoUrl: data.photoUrl || "",
-          createdAt: Number(data.createdAt) || Date.now(),
-        };
-      });
-      docsData.sort((a, b) => a.createdAt - b.createdAt);
-      setItems(docsData);
-      setLoading(false);
-    }, (err) => {
-      console.error(err);
-      setLoading(false);
-    });
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const docsData = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            type: data.type || "about_us_item",
+            title: data.title || "",
+            description: data.description || "",
+            photoBase64: data.photoBase64 || "",
+            photoUrl: data.photoUrl || "",
+            createdAt: Number(data.createdAt) || Date.now(),
+          };
+        });
+        docsData.sort((a, b) => a.createdAt - b.createdAt);
+        setItems(docsData);
+        setLoading(false);
+      },
+      (err) => {
+        console.error(err);
+        setLoading(false);
+      },
+    );
     return () => unsub();
   }, []);
 
@@ -3363,7 +4039,8 @@ function AboutUsManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Deseja realmente excluir esta seção de Quem Somos?")) return;
+    if (!window.confirm("Deseja realmente excluir esta seção de Quem Somos?"))
+      return;
     try {
       await deleteDoc(doc(db, "appContent", id));
       if (editingItem?.id === id) resetForm();
@@ -3389,7 +4066,8 @@ function AboutUsManager() {
             Configurações do "Quem Somos"
           </h2>
           <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
-            Adicione, edite ou remova as seções editoriais explicativas da história e metas do GymStars Brasil.
+            Adicione, edite ou remova as seções editoriais explicativas da
+            história e metas do GymStars Brasil.
           </p>
         </div>
         <a
@@ -3403,7 +4081,10 @@ function AboutUsManager() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Form panel */}
-        <form onSubmit={handleSave} className="lg:col-span-5 space-y-4 bg-black/25 p-4 rounded-2xl border border-slate-800/60 w-full">
+        <form
+          onSubmit={handleSave}
+          className="lg:col-span-5 space-y-4 bg-black/25 p-4 rounded-2xl border border-slate-800/60 w-full"
+        >
           <h3 className="text-xs font-black uppercase text-[#009c3b] tracking-wider">
             {editingItem ? "Editar Seção" : "Criar Nova Seção"}
           </h3>
@@ -3444,14 +4125,21 @@ function AboutUsManager() {
 
             {photoBase64 ? (
               <div className="relative group border border-slate-800 rounded-xl overflow-hidden bg-black h-28 flex items-center justify-center">
-                <img src={photoBase64} alt="" className="h-full object-contain" referrerPolicy="no-referrer" />
+                <img
+                  src={photoBase64 || undefined}
+                  alt=""
+                  className="h-full object-contain"
+                  referrerPolicy="no-referrer"
+                />
                 <button
                   type="button"
                   onClick={() => setPhotoBase64("")}
                   className="absolute inset-0 bg-black/80 flex flex-col gap-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <Trash2 className="w-4 h-4 text-red-500" />
-                  <span className="text-[9px] text-white font-bold uppercase tracking-widest">Remover Imagem</span>
+                  <span className="text-[9px] text-white font-bold uppercase tracking-widest">
+                    Remover Imagem
+                  </span>
                 </button>
               </div>
             ) : (
@@ -3504,7 +4192,11 @@ function AboutUsManager() {
               disabled={savingLoading || uploadLoading}
               className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase rounded-lg transition-all disabled:opacity-50"
             >
-              {savingLoading ? "Salvando..." : editingItem ? "Salvar Alterações" : "Criar Seção"}
+              {savingLoading
+                ? "Salvando..."
+                : editingItem
+                  ? "Salvar Alterações"
+                  : "Criar Seção"}
             </button>
           </div>
         </form>
@@ -3531,9 +4223,14 @@ function AboutUsManager() {
                   className="bg-black/25 hover:bg-black/40 p-3 rounded-xl border border-slate-850 flex items-center justify-between gap-4 transition-all"
                 >
                   <div className="flex items-center gap-3 overflow-hidden">
-                    {(item.photoBase64 || item.photoUrl) ? (
+                    {item.photoBase64 || item.photoUrl ? (
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-black shrink-0 border border-slate-800">
-                        <img src={item.photoBase64 || item.photoUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img
+                          src={item.photoBase64 || item.photoUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
                       </div>
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
@@ -3541,7 +4238,9 @@ function AboutUsManager() {
                       </div>
                     )}
                     <div className="overflow-hidden">
-                      <h4 className="text-xs font-bold text-white truncate">{item.title}</h4>
+                      <h4 className="text-xs font-bold text-white truncate">
+                        {item.title}
+                      </h4>
                       <p className="text-[10px] text-slate-400 truncate max-w-[280px] sm:max-w-[420px]">
                         {item.description}
                       </p>
@@ -3581,7 +4280,9 @@ function CoursesManager() {
   const [coverImage, setCoverImage] = useState("");
   const [status, setStatus] = useState<"Rascunho" | "Publicado">("Rascunho");
   const [cargaHoraria, setCargaHoraria] = useState<number>(20);
-  const [registrationStatus, setRegistrationStatus] = useState<"Aberto" | "Fechado">("Aberto");
+  const [registrationStatus, setRegistrationStatus] = useState<
+    "Aberto" | "Fechado"
+  >("Aberto");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -3603,22 +4304,26 @@ function CoursesManager() {
     const q = query(
       collection(db, "appContent"),
       where("type", "==", "course"),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setCourses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    }, (err) => {
-      console.error("Erro no CoursesManager:", err);
-      setLoading(false);
-    });
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setCourses(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Erro no CoursesManager:", err);
+        setLoading(false);
+      },
+    );
     return () => unsub();
   }, []);
 
   useEffect(() => {
     // Sync Users for resolving student profiles
     const unsub = onSnapshot(collection(db, "users"), (snap) => {
-      setUsers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setUsers(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
     return () => unsub();
   }, []);
@@ -3691,7 +4396,7 @@ function CoursesManager() {
           guidelinesPdf: guidelinesPdf || "",
           guidelinesPdfName: guidelinesPdfName || "",
           lessons: lessons || [],
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
         });
       } else {
         await addDoc(collection(db, "appContent"), {
@@ -3708,7 +4413,7 @@ function CoursesManager() {
           createdAt: Date.now(),
           enrolledUsers: [],
           completedUsers: [],
-          certificates: {}
+          certificates: {},
         });
       }
 
@@ -3747,7 +4452,12 @@ function CoursesManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Deseja realmente deletar este curso? Isso é irreversível.")) return;
+    if (
+      !window.confirm(
+        "Deseja realmente deletar este curso? Isso é irreversível.",
+      )
+    )
+      return;
     try {
       await deleteDoc(doc(db, "appContent", id));
       if (selectedCourseId === id) setSelectedCourseId(null);
@@ -3784,60 +4494,75 @@ function CoursesManager() {
 
     try {
       await updateDoc(doc(db, "appContent", course.id), {
-        completedUsers: updatedCompleted
+        completedUsers: updatedCompleted,
       });
     } catch (err) {
       console.error("Erro ao atualizar status de conclusão do aluno:", err);
     }
   };
 
-  const handleToggleModuleCompleted = async (course: any, studentId: string, moduleKey: "m1" | "m2" | "m3") => {
+  const handleToggleModuleCompleted = async (
+    course: any,
+    studentId: string,
+    moduleKey: "m1" | "m2" | "m3",
+  ) => {
     const modulesMap = course.completedModulesByStudent || {};
-    const studentModules = modulesMap[studentId] || { m1: false, m2: false, m3: false };
-    
+    const studentModules = modulesMap[studentId] || {
+      m1: false,
+      m2: false,
+      m3: false,
+    };
+
     const updatedStudentModules = {
       ...studentModules,
-      [moduleKey]: !studentModules[moduleKey]
+      [moduleKey]: !studentModules[moduleKey],
     };
 
     const updatedModulesMap = {
       ...modulesMap,
-      [studentId]: updatedStudentModules
+      [studentId]: updatedStudentModules,
     };
 
     try {
       await updateDoc(doc(db, "appContent", course.id), {
-        completedModulesByStudent: updatedModulesMap
+        completedModulesByStudent: updatedModulesMap,
       });
     } catch (err) {
       console.error("Erro ao atualizar módulo do aluno:", err);
     }
   };
 
-  const handleUploadCertificateForUser = async (course: any, studentId: string, base64Image: string) => {
+  const handleUploadCertificateForUser = async (
+    course: any,
+    studentId: string,
+    base64Image: string,
+  ) => {
     const currentCertificates = course.certificates || {};
     const updatedCertificates = {
       ...currentCertificates,
-      [studentId]: base64Image
+      [studentId]: base64Image,
     };
 
     try {
       await updateDoc(doc(db, "appContent", course.id), {
-        certificates: updatedCertificates
+        certificates: updatedCertificates,
       });
     } catch (err) {
       console.error("Erro ao salvar certificado para o aluno:", err);
     }
   };
 
-  const handleRemoveCertificateForUser = async (course: any, studentId: string) => {
+  const handleRemoveCertificateForUser = async (
+    course: any,
+    studentId: string,
+  ) => {
     const currentCertificates = course.certificates || {};
     const updatedCertificates = { ...currentCertificates };
     delete updatedCertificates[studentId];
 
     try {
       await updateDoc(doc(db, "appContent", course.id), {
-        certificates: updatedCertificates
+        certificates: updatedCertificates,
       });
     } catch (err) {
       console.error("Erro ao deletar certificado do aluno:", err);
@@ -3849,7 +4574,7 @@ function CoursesManager() {
   return (
     <div className="bg-[#0A1221] border border-slate-800 p-6 sm:p-8 rounded-[2.5rem] space-y-8 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#009c3b]/5 rounded-full blur-3xl pointer-events-none" />
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
         <div className="flex items-center gap-4">
@@ -3857,8 +4582,12 @@ function CoursesManager() {
             <GraduationCap className="w-8 h-8 text-[#009c3b]" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">Gerenciar Cursos</h2>
-            <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-0.5">Criar, Editar e Organizar Aulas & Certificados</p>
+            <h2 className="text-xl font-black text-white italic uppercase tracking-tighter">
+              Gerenciar Cursos
+            </h2>
+            <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-0.5">
+              Criar, Editar e Organizar Aulas & Certificados
+            </p>
           </div>
         </div>
       </div>
@@ -3911,8 +4640,12 @@ function CoursesManager() {
                   onChange={(e) => setRegistrationStatus(e.target.value as any)}
                   className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all"
                 >
-                  <option value="Aberto" className="bg-[#0A1221]">🟢 Aberto (Aceitando Inscrições)</option>
-                  <option value="Fechado" className="bg-[#0A1221]">🔴 Fechado (Inscrições Encerradas)</option>
+                  <option value="Aberto" className="bg-[#0A1221]">
+                    🟢 Aberto (Aceitando Inscrições)
+                  </option>
+                  <option value="Fechado" className="bg-[#0A1221]">
+                    🔴 Fechado (Inscrições Encerradas)
+                  </option>
                 </select>
               </div>
             </div>
@@ -3922,10 +4655,10 @@ function CoursesManager() {
                 Descrição do Curso
               </label>
               <div className="bg-slate-950/60 border border-slate-800 rounded-2xl overflow-hidden quill-dark p-1">
-                <RichTextEditor 
-                  value={description} 
-                  onChange={setDescription} 
-                  placeholder="Descreva detalhadamente o conteúdo programático, as datas das aulas, carga horária e quem pode se inscrever..." 
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                  placeholder="Descreva detalhadamente o conteúdo programático, as datas das aulas, carga horária e quem pode se inscrever..."
                 />
               </div>
             </div>
@@ -3940,8 +4673,12 @@ function CoursesManager() {
                   onChange={(e) => setStatus(e.target.value as any)}
                   className="w-full bg-black/40 border border-slate-800 focus:border-[#009c3b] rounded-2xl px-4 py-3.5 text-white text-sm outline-none transition-all"
                 >
-                  <option value="Rascunho" className="bg-[#0A1221]">📂 Rascunho</option>
-                  <option value="Publicado" className="bg-[#0A1221]">🚀 Publicado</option>
+                  <option value="Rascunho" className="bg-[#0A1221]">
+                    📂 Rascunho
+                  </option>
+                  <option value="Publicado" className="bg-[#0A1221]">
+                    🚀 Publicado
+                  </option>
                 </select>
               </div>
 
@@ -3990,7 +4727,7 @@ function CoursesManager() {
             {coverImage && (
               <div className="relative group rounded-2xl overflow-hidden aspect-[16/9] border border-slate-800 bg-black mt-2">
                 <img
-                  src={coverImage}
+                  src={coverImage || undefined}
                   alt="Pré-visualização"
                   className="w-full h-full object-cover"
                 />
@@ -4021,7 +4758,9 @@ function CoursesManager() {
                     <FileText className="w-5 h-5 text-slate-500 group-hover:text-[#009c3b]" />
                   </div>
                   <span className="text-[11px] font-medium text-slate-500 group-hover:text-slate-400 transition-colors">
-                    {guidelinesPdfName ? `PDF Selecionado: ${guidelinesPdfName}` : "Selecionar PDF do Manual"}
+                    {guidelinesPdfName
+                      ? `PDF Selecionado: ${guidelinesPdfName}`
+                      : "Selecionar PDF do Manual"}
                   </span>
                 </div>
               </div>
@@ -4029,7 +4768,9 @@ function CoursesManager() {
                 <div className="flex items-center justify-between bg-black/40 border border-slate-850 px-3.5 py-2.5 rounded-2xl mt-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <FileText className="w-4 h-4 text-[#009c3b] shrink-0" />
-                    <span className="text-[11px] text-slate-300 font-medium truncate">{guidelinesPdfName || "Manual_Diretrizes.pdf"}</span>
+                    <span className="text-[11px] text-slate-300 font-medium truncate">
+                      {guidelinesPdfName || "Manual_Diretrizes.pdf"}
+                    </span>
                   </div>
                   <button
                     type="button"
@@ -4112,9 +4853,12 @@ function CoursesManager() {
                       className="flex items-center justify-between gap-3 bg-slate-950/40 p-2.5 rounded-xl border border-slate-900"
                     >
                       <div className="text-left">
-                        <span className="block text-[10px] text-white font-bold leading-tight">{less.title}</span>
+                        <span className="block text-[10px] text-white font-bold leading-tight">
+                          {less.title}
+                        </span>
                         <span className="text-[8px] font-mono font-bold text-[#009c3b] uppercase tracking-wider">
-                          🗓 {less.date.split('-').reverse().join('/')} às {less.time}
+                          🗓 {less.date.split("-").reverse().join("/")} às{" "}
+                          {less.time}
                         </span>
                       </div>
                       <button
@@ -4145,7 +4889,11 @@ function CoursesManager() {
                 disabled={isSaving}
                 className="flex-1 bg-[#009c3b] hover:bg-[#008031] text-white font-black uppercase tracking-widest py-4 rounded-2xl text-[11px] transition shadow-lg shadow-[#009c3b]/10 disabled:opacity-50 active:scale-95"
               >
-                {isSaving ? "Salvando..." : editingId ? "Salvar Alterações" : "Cadastrar Curso"}
+                {isSaving
+                  ? "Salvando..."
+                  : editingId
+                    ? "Salvar Alterações"
+                    : "Cadastrar Curso"}
               </button>
             </div>
           </form>
@@ -4161,12 +4909,16 @@ function CoursesManager() {
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center gap-3 bg-black/15 border border-slate-850 rounded-3xl">
               <div className="w-6 h-6 border-2 border-[#009c3b]/30 border-t-[#009c3b] rounded-full animate-spin" />
-              <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Carregando lista...</span>
+              <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">
+                Carregando lista...
+              </span>
             </div>
           ) : courses.length === 0 ? (
             <div className="py-16 text-center bg-black/15 border border-slate-850 rounded-3xl font-sans">
               <BookOpen className="w-8 h-8 text-slate-800 mx-auto mb-3" />
-              <p className="text-xs text-slate-500 font-medium">Nenhum curso cadastrado ainda.</p>
+              <p className="text-xs text-slate-500 font-medium">
+                Nenhum curso cadastrado ainda.
+              </p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
@@ -4175,13 +4927,20 @@ function CoursesManager() {
                   key={course.id}
                   className={clsx(
                     "bg-black/25 hover:bg-black/40 p-4 rounded-2xl border flex items-center justify-between gap-4 transition-all group/item",
-                    selectedCourseId === course.id ? "border-[#009c3b]" : "border-slate-850"
+                    selectedCourseId === course.id
+                      ? "border-[#009c3b]"
+                      : "border-slate-850",
                   )}
                 >
                   <div className="flex items-center gap-3.5 overflow-hidden">
                     {course.coverImage ? (
                       <div className="w-14 h-14 rounded-xl overflow-hidden bg-black shrink-0 border border-slate-800">
-                        <img src={course.coverImage} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img
+                          src={course.coverImage || undefined}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
                       </div>
                     ) : (
                       <div className="w-14 h-14 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 border border-slate-800">
@@ -4190,12 +4949,16 @@ function CoursesManager() {
                     )}
                     <div className="overflow-hidden">
                       <div className="flex gap-2 items-center mb-1">
-                        <h4 className="text-xs font-black text-white uppercase tracking-tight truncate line-clamp-1 group-hover/item:text-[#009c3b] transition-colors">{course.title}</h4>
-                        <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
-                          course.status === "Publicado" 
-                            ? "bg-[#009c3b]/10 border border-[#009c3b]/20 text-[#009c3b]" 
-                            : "bg-amber-500/10 border border-amber-500/20 text-amber-500"
-                        }`}>
+                        <h4 className="text-xs font-black text-white uppercase tracking-tight truncate line-clamp-1 group-hover/item:text-[#009c3b] transition-colors">
+                          {course.title}
+                        </h4>
+                        <span
+                          className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                            course.status === "Publicado"
+                              ? "bg-[#009c3b]/10 border border-[#009c3b]/20 text-[#009c3b]"
+                              : "bg-amber-500/10 border border-amber-500/20 text-amber-500"
+                          }`}
+                        >
                           {course.status}
                         </span>
                       </div>
@@ -4206,7 +4969,9 @@ function CoursesManager() {
                         <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">
                           📚 {course.cargaHoraria || 20} horas
                         </span>
-                        <span className={`text-[8px] font-bold uppercase ${course.registrationStatus === "Fechado" ? "text-red-500" : "text-emerald-500"}`}>
+                        <span
+                          className={`text-[8px] font-bold uppercase ${course.registrationStatus === "Fechado" ? "text-red-500" : "text-emerald-500"}`}
+                        >
                           • Inscrições: {course.registrationStatus || "Aberto"}
                         </span>
                         <span className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest">
@@ -4218,12 +4983,16 @@ function CoursesManager() {
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
-                      onClick={() => setSelectedCourseId(selectedCourseId === course.id ? null : course.id)}
+                      onClick={() =>
+                        setSelectedCourseId(
+                          selectedCourseId === course.id ? null : course.id,
+                        )
+                      }
                       className={clsx(
                         "p-2 rounded-xl transition text-[10px] font-black uppercase tracking-widest flex items-center gap-1",
-                        selectedCourseId === course.id 
-                          ? "bg-[#009c3b] text-white" 
-                          : "bg-slate-900 text-slate-400 hover:text-white"
+                        selectedCourseId === course.id
+                          ? "bg-[#009c3b] text-white"
+                          : "bg-slate-900 text-slate-400 hover:text-white",
                       )}
                       title="Gerenciar Alunos Inscritos"
                     >
@@ -4258,10 +5027,14 @@ function CoursesManager() {
           <div className="bg-black/25 border border-slate-850 p-6 rounded-3xl space-y-6">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div>
-                <span className="text-[10px] text-[#009c3b] font-black uppercase tracking-widest">Lista Oficial de Alunos</span>
-                <h3 className="text-lg font-black text-white uppercase italic tracking-tight">{activeCourse.title}</h3>
+                <span className="text-[10px] text-[#009c3b] font-black uppercase tracking-widest">
+                  Lista Oficial de Alunos
+                </span>
+                <h3 className="text-lg font-black text-white uppercase italic tracking-tight">
+                  {activeCourse.title}
+                </h3>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedCourseId(null)}
                 className="text-slate-400 hover:text-white bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition"
               >
@@ -4269,7 +5042,8 @@ function CoursesManager() {
               </button>
             </div>
 
-            {(!activeCourse.enrolledUsers || activeCourse.enrolledUsers.length === 0) ? (
+            {!activeCourse.enrolledUsers ||
+            activeCourse.enrolledUsers.length === 0 ? (
               <div className="py-12 text-center text-slate-500 font-medium text-xs font-sans">
                 <Users className="w-10 h-10 text-slate-850 mx-auto mb-3" />
                 Nenhum aluno inscrito neste curso ainda.
@@ -4277,35 +5051,57 @@ function CoursesManager() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {activeCourse.enrolledUsers.map((studentId: string) => {
-                  const studentProfile = users.find((u) => u.id === studentId || u.uid === studentId);
-                  const isCompleted = activeCourse.completedUsers?.includes(studentId);
+                  const studentProfile = users.find(
+                    (u) => u.id === studentId || u.uid === studentId,
+                  );
+                  const isCompleted =
+                    activeCourse.completedUsers?.includes(studentId);
                   const certImage = activeCourse.certificates?.[studentId];
-                  const studentModules = activeCourse.completedModulesByStudent?.[studentId] || { m1: false, m2: false, m3: false };
+                  const studentModules = activeCourse
+                    .completedModulesByStudent?.[studentId] || {
+                    m1: false,
+                    m2: false,
+                    m3: false,
+                  };
 
                   return (
-                    <div 
+                    <div
                       key={studentId}
                       className="bg-[#070F1C]/75 border border-slate-850 p-5 rounded-2xl flex flex-col justify-between gap-4 group/st relative"
                     >
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-black text-sm text-slate-300">
-                            {studentProfile?.displayName?.substring(0, 2).toUpperCase() || studentProfile?.username?.substring(0,2).toUpperCase() || "?"}
+                            {studentProfile?.displayName
+                              ?.substring(0, 2)
+                              .toUpperCase() ||
+                              studentProfile?.username
+                                ?.substring(0, 2)
+                                .toUpperCase() ||
+                              "?"}
                           </div>
                           <div>
-                            <h4 className="text-xs font-black text-white uppercase tracking-tight">{studentProfile?.displayName || studentProfile?.username || `ID: ${studentId}`}</h4>
-                            <p className="text-[10px] text-slate-500 font-medium">{studentProfile?.email || "Sem e-mail"}</p>
+                            <h4 className="text-xs font-black text-white uppercase tracking-tight">
+                              {studentProfile?.displayName ||
+                                studentProfile?.username ||
+                                `ID: ${studentId}`}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 font-medium">
+                              {studentProfile?.email || "Sem e-mail"}
+                            </p>
                           </div>
                         </div>
 
                         {/* Completion Toggle Button */}
                         <button
-                          onClick={() => handleToggleCompleted(activeCourse, studentId)}
+                          onClick={() =>
+                            handleToggleCompleted(activeCourse, studentId)
+                          }
                           className={clsx(
                             "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all duration-300",
-                            isCompleted 
-                              ? "bg-[#009c3b] border-[#009c3b] text-white shadow-[0_0_10px_rgba(0,156,59,0.2)]" 
-                              : "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white"
+                            isCompleted
+                              ? "bg-[#009c3b] border-[#009c3b] text-white shadow-[0_0_10px_rgba(0,156,59,0.2)]"
+                              : "bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white",
                           )}
                         >
                           {isCompleted ? "✓ Aprovado" : "⚡ Aprovar Aluno"}
@@ -4321,46 +5117,70 @@ function CoursesManager() {
                           {/* Module 1 */}
                           <button
                             type="button"
-                            onClick={() => handleToggleModuleCompleted(activeCourse, studentId, "m1")}
+                            onClick={() =>
+                              handleToggleModuleCompleted(
+                                activeCourse,
+                                studentId,
+                                "m1",
+                              )
+                            }
                             className={clsx(
                               "flex items-center justify-between px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition border text-left",
-                              studentModules.m1 
-                                ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-[#009c3b]" 
-                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300"
+                              studentModules.m1
+                                ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-[#009c3b]"
+                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300",
                             )}
                           >
                             <span>Módulo 1: Introdução Básica</span>
-                            <span>{studentModules.m1 ? "✓ CONCLUÍDO" : "○ PENDENTE"}</span>
+                            <span>
+                              {studentModules.m1 ? "✓ CONCLUÍDO" : "○ PENDENTE"}
+                            </span>
                           </button>
 
                           {/* Module 2 */}
                           <button
                             type="button"
-                            onClick={() => handleToggleModuleCompleted(activeCourse, studentId, "m2")}
+                            onClick={() =>
+                              handleToggleModuleCompleted(
+                                activeCourse,
+                                studentId,
+                                "m2",
+                              )
+                            }
                             className={clsx(
                               "flex items-center justify-between px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition border text-left",
-                              studentModules.m2 
-                                ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-[#009c3b]" 
-                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300"
+                              studentModules.m2
+                                ? "bg-[#009c3b]/10 border-[#009c3b]/30 text-[#009c3b]"
+                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300",
                             )}
                           >
                             <span>Módulo 2: Técnicas Avançadas</span>
-                            <span>{studentModules.m2 ? "✓ CONCLUÍDO" : "○ PENDENTE"}</span>
+                            <span>
+                              {studentModules.m2 ? "✓ CONCLUÍDO" : "○ PENDENTE"}
+                            </span>
                           </button>
 
                           {/* Module 3 */}
                           <button
                             type="button"
-                            onClick={() => handleToggleModuleCompleted(activeCourse, studentId, "m3")}
+                            onClick={() =>
+                              handleToggleModuleCompleted(
+                                activeCourse,
+                                studentId,
+                                "m3",
+                              )
+                            }
                             className={clsx(
                               "flex items-center justify-between px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition border text-left",
-                              studentModules.m3 
-                                ? "bg-amber-500/10 border-amber-500/30 text-amber-500" 
-                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300"
+                              studentModules.m3
+                                ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
+                                : "bg-slate-900 border-slate-850/40 text-slate-400 hover:text-slate-300",
                             )}
                           >
                             <span>Módulo 3: Prova Presencial</span>
-                            <span>{studentModules.m3 ? "✓ CONCLUÍDO" : "○ PENDENTE"}</span>
+                            <span>
+                              {studentModules.m3 ? "✓ CONCLUÍDO" : "○ PENDENTE"}
+                            </span>
                           </button>
                         </div>
                       </div>
@@ -4374,10 +5194,19 @@ function CoursesManager() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                           {certImage ? (
                             <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-black aspect-[4/3] group-hover/st:border-[#009c3b]/40 transition-colors">
-                              <img src={certImage} alt="" className="w-full h-full object-contain" />
+                              <img
+                                src={certImage || undefined}
+                                alt=""
+                                className="w-full h-full object-contain"
+                              />
                               <button
                                 type="button"
-                                onClick={() => handleRemoveCertificateForUser(activeCourse, studentId)}
+                                onClick={() =>
+                                  handleRemoveCertificateForUser(
+                                    activeCourse,
+                                    studentId,
+                                  )
+                                }
                                 className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white p-1 rounded-full transition shadow-md"
                                 title="Remover Certificado"
                               >
@@ -4394,7 +5223,11 @@ function CoursesManager() {
                                   if (!f) return;
                                   const reader = new FileReader();
                                   reader.onload = (ev) => {
-                                    handleUploadCertificateForUser(activeCourse, studentId, ev.target?.result as string);
+                                    handleUploadCertificateForUser(
+                                      activeCourse,
+                                      studentId,
+                                      ev.target?.result as string,
+                                    );
                                   };
                                   reader.readAsDataURL(f);
                                 }}
@@ -4412,10 +5245,15 @@ function CoursesManager() {
                           <div className="text-[10px] text-slate-500 leading-relaxed">
                             {certImage ? (
                               <p className="text-[#009c3b] font-semibold">
-                                ✓ Certificado PNG configurado e disponível para o aluno baixar após a conclusão!
+                                ✓ Certificado PNG configurado e disponível para
+                                o aluno baixar após a conclusão!
                               </p>
                             ) : (
-                              <p>Arraste ou clique para enviar um certificado PNG específico para este aluno para quando ele concluir o curso.</p>
+                              <p>
+                                Arraste ou clique para enviar um certificado PNG
+                                específico para este aluno para quando ele
+                                concluir o curso.
+                              </p>
                             )}
                           </div>
                         </div>
@@ -4431,5 +5269,3 @@ function CoursesManager() {
     </div>
   );
 }
-
-
