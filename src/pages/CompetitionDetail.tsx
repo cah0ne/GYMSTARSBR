@@ -24,6 +24,15 @@ import download from "downloadjs";
 
 const CATEGORIES = ["TF", "AA", "VT", "UB", "BB", "FX"];
 
+const categoryMap: Record<string, string> = {
+  VT: "SALTO",
+  UB: "ASSIMÉTRICAS",
+  BB: "TRAVE",
+  FX: "SOLO",
+  AA: "INDIVIDUAL GERAL",
+  TF: "FINAL POR EQUIPES"
+};
+
 export default function CompetitionDetail() {
   const { id } = useParams();
   const { userData } = useOutletContext<{ userData: UserData | null }>();
@@ -55,6 +64,7 @@ export default function CompetitionDetail() {
           const dataUrl = await htmlToImage.toJpeg(downloadRef.current, {
             quality: 0.9,
             pixelRatio: 2, // better quality
+            skipFonts: true,
           });
           download(dataUrl, `ranking-${comp?.name}-${activeTab}.jpg`);
         } catch (e) {
@@ -458,6 +468,43 @@ export default function CompetitionDetail() {
     displayScores = displayScores.slice(0, 8);
   }
 
+  const getExportScores = () => {
+    const isPanamerican = comp?.name?.trim().toUpperCase().includes("PANAMERICANO");
+    const isIndividualApparatus = ["VT", "UB", "BB", "FX"].includes(activeTab);
+
+    if (isPanamerican && isIndividualApparatus) {
+      const filtered: any[] = [];
+      const teamCounts: Record<string, number> = {};
+
+      for (const s of displayScores) {
+        const rawTeam = s.team ? s.team.trim() : "";
+        const teamKey = rawTeam.toUpperCase();
+        const isTeamGymnast =
+          teamKey !== "" &&
+          teamKey !== "INDEPENDENTE" &&
+          teamKey !== "INDEPENDENT" &&
+          teamKey !== "EQUIPE";
+
+        if (isTeamGymnast) {
+          const count = teamCounts[teamKey] || 0;
+          if (count < 2) {
+            filtered.push(s);
+            teamCounts[teamKey] = count + 1;
+          }
+        } else {
+          filtered.push(s);
+        }
+
+        if (filtered.length === 8) {
+          break;
+        }
+      }
+      return filtered;
+    }
+
+    return displayScores.slice(0, 8);
+  };
+
   return (
     <div className="space-y-6">
       {statusMsg && (
@@ -472,38 +519,38 @@ export default function CompetitionDetail() {
         </div>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden flex flex-col">
+      <div className="bg-transparent border-t border-b border-white/20 px-4 py-8 md:py-12 relative flex flex-col">
         {comp.status === "ao vivo" && (
-          <div className="absolute top-0 right-0 bg-red-600/20 border border-red-500/50 text-red-500 text-xs font-bold px-4 py-1.5 pb-2 rounded-bl-3xl shadow-lg flex items-center gap-2 uppercase tracking-widest">
-            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-            AO VIVO
+          <div className="absolute top-4 right-4 bg-green-500 text-black text-[10px] font-black px-3 py-1 uppercase tracking-[0.3em] flex items-center gap-2 shadow-[0_0_15px_-3px_rgba(34,197,94,0.5)]">
+            <span className="w-1.5 h-1.5 bg-black rounded-full animate-pulse"></span>
+            AO VIVO AGORA
           </div>
         )}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
-          <div>
-            <div className="text-[10px] font-mono bg-white/10 px-2 py-1 rounded w-max mb-3 uppercase font-bold text-slate-300 tracking-wider">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="text-[10px] font-mono border border-neutral-700 px-3 py-1 w-max mb-4 uppercase font-bold text-neutral-400 tracking-[0.2em]">
               {comp.type}
             </div>
-            <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white leading-tight">
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-white leading-[1.1]">
               {comp.name}
             </h1>
           </div>
           {isAdmin && (
-            <div className="flex items-center gap-2">
+            <div className="flex gap-4">
               {comp.status !== "ao vivo" && (
                 <button
                   onClick={() => setStatus("ao vivo")}
-                  className="bg-red-600/20 border border-red-500/50 hover:bg-red-600/40 text-red-500 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors"
+                  className="bg-green-500 hover:bg-green-400 text-black px-6 py-2 font-black text-[10px] uppercase tracking-widest transition-colors"
                 >
-                  Iniciar (AO VIVO)
+                  TRANSMITIR AO VIVO
                 </button>
               )}
               {comp.status !== "encerrada" && (
                 <button
                   onClick={() => setStatus("encerrada")}
-                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors"
+                  className="bg-neutral-800 hover:bg-neutral-700 border border-neutral-600 text-white px-6 py-2 font-black text-[10px] uppercase tracking-widest transition-colors"
                 >
-                  Encerrar
+                  ENCERRAR EVENTO
                 </button>
               )}
             </div>
@@ -511,110 +558,111 @@ export default function CompetitionDetail() {
         </div>
       </div>
 
-      <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className="flex gap-2 bg-black/40 p-1 rounded-lg shrink-0">
-          {availableTabs.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveTab(cat)}
-              className={clsx(
-                "px-4 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap",
-                activeTab === cat
-                  ? "bg-slate-700 text-white"
-                  : "text-slate-500 hover:text-white",
-              )}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+      <div className="flex overflow-x-auto gap-2 scrollbar-hide border-b-2 border-neutral-800 pb-4">
+        {availableTabs.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveTab(cat)}
+            className={clsx(
+              "px-6 py-2 rounded-none font-black transition-all whitespace-nowrap uppercase tracking-[0.2em] text-xs border",
+              activeTab === cat
+                ? "bg-white text-black border-white"
+                : "bg-transparent text-neutral-500 border-neutral-800 hover:text-white hover:border-neutral-500",
+            )}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
 
       {activeLivePerf && (
-        <div className="bg-[#009c3b] p-4 rounded-2xl shadow-lg shadow-green-900/20 space-y-3">
-          {/* Header row: "Em quadra agora" and status */}
-          <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#d8f3dc] flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-              Em quadra agora
+        <div className="bg-transparent border border-green-500/50 p-6 rounded-none relative overflow-hidden group">
+          <div className="absolute inset-0 bg-green-500/5 group-hover:bg-green-500/10 transition-colors"></div>
+          {/* Header row */}
+          <div className="flex items-center justify-between gap-4 border-b border-green-500/20 pb-4 relative z-10">
+            <span className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-green-400 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_2px_rgba(74,222,128,0.5)]"></span>
+              EM QUADRA AGORA
             </span>
-            <span className="text-[10px] bg-black/30 px-2.5 py-1 rounded-full text-white font-bold uppercase tracking-wider shrink-0">
-              Ginasta em julgamento
+            <span className="text-[10px] font-mono bg-green-500/10 border border-green-500/30 text-green-400 px-3 py-1 uppercase tracking-[0.2em] font-bold">
+              JULGAMENTO
             </span>
           </div>
 
           {/* Gymnast and Team details */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            <div className="space-y-1">
-              <span className="text-base sm:text-lg font-black text-white block leading-tight">
-                {activeLivePerf.gymnastName} ({activeLivePerf.category})
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 relative z-10">
+            <div className="space-y-2">
+              <span className="text-2xl sm:text-3xl font-black text-white block leading-none uppercase tracking-tighter">
+                {activeLivePerf.gymnastName} <span className="text-green-500">[{activeLivePerf.category}]</span>
               </span>
-              <span className="text-xs text-white/90 font-medium bg-black/20 px-2.5 py-0.5 rounded-md inline-block">
-                Equipe:{" "}
-                {activeLivePerf.team ||
-                  scores.find((s) => s.gymnastId === activeLivePerf.gymnastId)
-                    ?.team ||
-                  "Independente"}
+              <span className="text-[10px] text-neutral-400 font-mono tracking-widest uppercase inline-block font-bold">
+                EQUIPE //{" "}
+                <span className="text-white">
+                  {activeLivePerf.team ||
+                    scores.find((s) => s.gymnastId === activeLivePerf.gymnastId)
+                      ?.team ||
+                    "INDEPENDENTE"}
+                </span>
               </span>
             </div>
 
             {activeLivePerf.category === "FX" && canStopMusic && (
               <button
                 onClick={handleStopMusic}
-                className="bg-red-700 hover:bg-red-600 border border-red-500/30 text-white font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-red-950/20 shrink-0 w-full sm:w-auto"
+                className="bg-black hover:bg-neutral-900 border-2 border-red-500 text-red-500 hover:text-red-400 font-black px-6 py-3 text-[10px] uppercase tracking-[0.2em] transition-colors cursor-pointer flex items-center justify-center w-full sm:w-auto"
               >
-                <Music className="w-3.5 h-3.5" /> Parar Música
+                 PARAR ÁUDIO
               </button>
             )}
           </div>
         </div>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-          <div className="flex flex-wrap space-x-2 items-center">
-            <h2 className="font-black italic uppercase tracking-tighter text-2xl text-white">
-              Ranking em Tempo Real
-            </h2>
-            <span className="bg-white/10 px-2 py-1 rounded text-[10px] font-mono mt-1 sm:mt-0">
+      <div className="bg-transparent border-t-2 border-neutral-800 flex flex-col">
+        <div className="p-6 md:p-8 flex flex-col sm:flex-row justify-between sm:items-end gap-6 bg-gradient-to-b from-neutral-900/50 to-transparent">
+          <div className="flex flex-col space-y-2">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-neutral-500">
               {activeTab === "TF"
-                ? "FINAL POR EQUIPES (SOMA)"
+                ? "// FINAL POR EQUIPES (SOMA)"
                 : activeTab === "AA"
-                  ? "INDIVIDUAL GERAL (SOMA)"
-                  : `CATEGORIA: ${activeTab}`}
+                  ? "// INDIVIDUAL GERAL (SOMA)"
+                  : `// CATEGORIA: ${activeTab}`}
             </span>
+            <h2 className="font-black uppercase tracking-tighter text-3xl md:text-4xl text-white">
+              TABELA DE CLASSIFICAÇÃO
+            </h2>
           </div>
           {isAdmin && (
-            <div className="flex gap-2 shrink-0">
+            <div className="flex gap-4 shrink-0">
               <button
                 onClick={() => handleDownload("9:16")}
                 disabled={!!downloadingImg}
-                className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/50 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
+                className="bg-neutral-900 hover:bg-neutral-800 text-white border border-neutral-700 hover:border-neutral-500 px-6 py-2 font-mono text-[10px] uppercase font-bold tracking-widest transition-colors flex items-center gap-2"
               >
                 {downloadingImg === "9:16" ? (
                   <Activity className="w-3 h-3 animate-spin" />
                 ) : (
                   <Download className="w-3 h-3" />
-                )}{" "}
-                9:16
+                )}
+                BAIXAR 9:16
               </button>
               <button
                 onClick={() => handleDownload("3:4")}
                 disabled={!!downloadingImg}
-                className="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/50 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1"
+                className="bg-neutral-900 hover:bg-neutral-800 text-white border border-neutral-700 hover:border-neutral-500 px-6 py-2 font-mono text-[10px] uppercase font-bold tracking-widest transition-colors flex items-center gap-2"
               >
                 {downloadingImg === "3:4" ? (
                   <Activity className="w-3 h-3 animate-spin" />
                 ) : (
                   <Download className="w-3 h-3" />
-                )}{" "}
-                3:4
+                )}
+                BAIXAR 3:4
               </button>
             </div>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto py-2">
+        <div className="flex-1 overflow-y-auto py-4 space-y-2">
           {displayScores.map((s, i) => (
             <div
               key={s.id}
@@ -622,19 +670,22 @@ export default function CompetitionDetail() {
                 if (!s.isTF && !s.isAA) setSelectedScore(s);
               }}
               className={clsx(
-                "p-4 mx-2 sm:mx-4 my-2 rounded-xl flex items-center justify-between hover:bg-white/5 transition-colors group border border-transparent active:scale-[0.98] transition-transform",
+                "p-4 md:p-6 mx-4 rounded-none flex flex-col md:flex-row md:items-center justify-between hover:bg-neutral-900/50 transition-colors group cursor-pointer border-l-4",
                 !s.isTF && !s.isAA && "cursor-pointer",
-                i === 0 ? "bg-white/5 border-yellow-400/20" : "",
+                i === 0 ? "border-yellow-400 bg-yellow-400/5" : "border-neutral-700/50 hover:border-neutral-500"
               )}
             >
-              <div className="flex items-center space-x-3 overflow-hidden">
-                <span className="font-mono text-sm opacity-50 w-6 flex justify-center shrink-0">
+              <div className="flex items-center space-x-6 overflow-hidden w-full md:w-auto mb-4 md:mb-0">
+                <span className={clsx(
+                  "font-mono text-2xl md:text-3xl font-black w-8 flex justify-center shrink-0",
+                  i === 0 ? "text-yellow-400" : "text-neutral-600"
+                )}>
                   {comp.status === "encerrada" &&
                     (comp.type?.includes("Finais") ||
                       (comp.type === "Final AA" && activeTab === "AA") ||
                       (comp.type === "Final TF" && activeTab === "TF")) &&
                     i === 0 && (
-                      <span className="text-xl" title="Ouro">
+                      <span className="text-3xl md:text-4xl" title="Ouro">
                         🥇
                       </span>
                     )}
@@ -643,7 +694,7 @@ export default function CompetitionDetail() {
                       (comp.type === "Final AA" && activeTab === "AA") ||
                       (comp.type === "Final TF" && activeTab === "TF")) &&
                     i === 1 && (
-                      <span className="text-xl" title="Prata">
+                      <span className="text-3xl md:text-4xl" title="Prata">
                         🥈
                       </span>
                     )}
@@ -652,7 +703,7 @@ export default function CompetitionDetail() {
                       (comp.type === "Final AA" && activeTab === "AA") ||
                       (comp.type === "Final TF" && activeTab === "TF")) &&
                     i === 2 && (
-                      <span className="text-xl" title="Bronze">
+                      <span className="text-3xl md:text-4xl" title="Bronze">
                         🥉
                       </span>
                     )}
@@ -664,52 +715,44 @@ export default function CompetitionDetail() {
                     i < 3
                   ) && String(i + 1).padStart(2, "0")}
                 </span>
-                <div className="overflow-hidden">
-                  <p className="font-bold text-sm sm:text-base leading-tight text-white truncate">
+                <div className="overflow-hidden flex-1">
+                  <p className="font-black text-xl sm:text-2xl leading-none text-white uppercase tracking-tight truncate group-hover:text-white transition-colors">
                     {s.gymnastName}
                   </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5 truncate uppercase tracking-wider">
-                    {s.team || "Independente"}
+                  <p className="text-[10px] text-neutral-400 mt-2 truncate uppercase tracking-widest font-mono">
+                    {s.team || "Independente"} {s.isAA && <span className="text-green-500 ml-4 font-bold">// {s.categoryCount} AP.</span>}
                   </p>
-                  {s.isAA && (
-                    <p className="text-[9px] text-[#009c3b] mt-1 font-bold">
-                      {s.categoryCount} APARELHOS
-                    </p>
-                  )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-6 shrink-0 ml-2">
+              <div className="flex items-center justify-between md:justify-end gap-6 md:gap-12 shrink-0 md:ml-4 border-t border-neutral-800 md:border-t-0 pt-4 md:pt-0 w-full md:w-auto">
                 {!s.isTF && !s.isAA && (
-                  <div className="hidden sm:block text-right">
-                    <p className="text-[10px] text-slate-500 uppercase mb-0.5">
-                      D+E
+                  <div className="text-left md:text-right">
+                    <p className="text-[10px] text-neutral-500 uppercase font-mono tracking-widest mb-1">
+                      <span className="text-white">D</span> // {s.dScore?.toFixed(2)}
                     </p>
-                    <p className="font-mono text-xs text-slate-400">
-                      {s.dScore?.toFixed(2)} + {s.eScore?.toFixed(2)}
+                    <p className="text-[10px] text-neutral-500 uppercase font-mono tracking-widest">
+                      <span className="text-white">E</span> // {s.eScore?.toFixed(2)}
                     </p>
                   </div>
                 )}
                 <div
                   className={clsx(
-                    "px-3 py-1.5 rounded-lg border text-right transition-colors min-w-[70px]",
-                    i === 0
-                      ? "bg-yellow-400/10 border-yellow-400/20"
-                      : "bg-black/20 border-white/5",
+                    "text-right tracking-tighter"
                   )}
                 >
                   <p
                     className={clsx(
-                      "text-[9px] uppercase font-black tracking-tighter",
-                      i === 0 ? "text-yellow-500" : "text-slate-500",
+                      "text-[10px] font-mono tracking-[0.2em] mb-1",
+                      i === 0 ? "text-yellow-500 font-bold" : "text-neutral-500"
                     )}
                   >
-                    Total
+                    TOTAL
                   </p>
                   <p
                     className={clsx(
-                      "text-base sm:text-lg font-mono font-black",
-                      i === 0 ? "text-yellow-400" : "text-white",
+                      "text-3xl sm:text-4xl font-black",
+                      i === 0 ? "text-yellow-400" : "text-white"
                     )}
                   >
                     {s.finalScore?.toFixed(3)}
@@ -719,8 +762,9 @@ export default function CompetitionDetail() {
             </div>
           ))}
           {displayScores.length === 0 && (
-            <div className="p-12 text-center text-slate-500 font-mono text-sm">
-              Nenhum resultado registrado nesta categoria.
+            <div className="py-20 text-center flex flex-col items-center justify-center">
+              <div className="text-neutral-800 font-mono text-sm tracking-widest mb-2">[SEM_NOTAS_REGISTRADAS]</div>
+              <div className="text-neutral-500 font-mono text-xs">Aguardando dados de telemetria para esta categoria.</div>
             </div>
           )}
         </div>
@@ -739,7 +783,10 @@ export default function CompetitionDetail() {
         >
           <div
             ref={downloadRef}
-            className="bg-[#070F1C] flex flex-col items-center justify-start p-16"
+            className={clsx(
+              "bg-[#030303] flex flex-col items-center justify-start border-8 border-neutral-900",
+              downloadingImg === "3:4" ? "p-10" : "p-16"
+            )}
             style={{
               width: "1080px",
               height: downloadingImg === "9:16" ? "1920px" : "1440px",
@@ -747,42 +794,58 @@ export default function CompetitionDetail() {
             }}
           >
             {/* Header */}
-            <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-10 mb-8 relative overflow-hidden flex flex-col items-center shadow-2xl">
-              <div className="text-2xl font-mono bg-white/10 px-4 py-2 rounded-lg mb-6 uppercase font-bold text-slate-300 tracking-wider">
-                {comp.type}
+            <div className={clsx(
+              "w-full bg-transparent border-2 border-neutral-700 relative flex flex-col items-start shadow-2xl",
+              downloadingImg === "3:4" ? "p-8 mb-6" : "p-10 mb-8"
+            )}>
+              <div className={clsx(
+                "text-xl font-mono border-l-4 border-white px-4 py-2 uppercase font-bold text-neutral-300 tracking-[0.2em]",
+                downloadingImg === "3:4" ? "mb-4" : "mb-6"
+              )}>
+                {comp.name?.toUpperCase().includes("PANAMERICANO") && ["VT", "UB", "BB", "FX"].includes(activeTab) ? "QF" : comp.type}
               </div>
-              <h1 className="text-6xl font-black italic uppercase tracking-tighter text-white leading-tight text-center">
+              <h1 className={clsx(
+                "font-black uppercase tracking-tighter text-white leading-none",
+                downloadingImg === "3:4" ? "text-5xl" : "text-6xl"
+              )}>
                 {comp.name}
               </h1>
-              <div className="mt-8 bg-indigo-500/20 text-indigo-400 px-6 py-3 rounded-xl border border-indigo-500/50 text-3xl font-black uppercase tracking-widest">
-                {activeTab === "TF"
-                  ? "FINAL POR EQUIPES"
-                  : activeTab === "AA"
-                    ? "INDIVIDUAL GERAL"
-                    : `CATEGORIA: ${activeTab}`}
+              <div className={clsx(
+                "bg-white text-black font-mono font-black uppercase tracking-[0.3em]",
+                downloadingImg === "3:4" ? "mt-4 px-5 py-2 text-xl" : "mt-8 px-6 py-3 text-2xl"
+              )}>
+                {comp.name?.toUpperCase().includes("PANAMERICANO") && ["VT", "UB", "BB", "FX"].includes(activeTab)
+                  ? `QF - ${categoryMap[activeTab] || activeTab}`
+                  : activeTab === "TF"
+                    ? "FINAL POR EQUIPES (SOMA)"
+                    : activeTab === "AA"
+                      ? "INDIVIDUAL GERAL"
+                      : `CATEGORIA: ${categoryMap[activeTab] || activeTab}`}
               </div>
             </div>
 
             {/* List */}
-            <div className="w-full flex-1 flex flex-col justify-start gap-6">
-              {displayScores.slice(0, 8).map((s, i) => (
+            <div className={clsx(
+              "w-full flex-1 flex flex-col justify-start",
+              downloadingImg === "3:4" ? "space-y-2.5" : "space-y-4"
+            )}>
+              {getExportScores().map((s, i) => (
                 <div
                   key={s.id}
                   className={clsx(
-                    "p-8 rounded-3xl flex items-center justify-between border shadow-xl bg-slate-900 border-slate-800",
-                    i === 0 ? "bg-white/5 border-yellow-400/40" : "",
-                    i === 1 ? "bg-white/5 border-slate-400/40" : "",
-                    i === 2 ? "bg-white/5 border-orange-400/40" : "",
+                    "w-full flex items-center justify-between border-l-[8px] overflow-hidden",
+                    downloadingImg === "3:4" ? "py-2.5 px-5" : "py-4 px-6",
+                    i === 0 ? "border-yellow-400 bg-yellow-400/5 text-yellow-400" : "border-neutral-700 bg-neutral-900",
                   )}
                 >
-                  <div className="flex items-center space-x-8">
-                    <span className="font-mono text-4xl opacity-50 w-16 flex justify-center shrink-0">
+                  <div className="flex items-center space-x-8 min-w-0 flex-1">
+                    <span className="font-mono text-5xl font-black w-24 flex justify-center shrink-0">
                       {comp.status === "encerrada" &&
                         (comp.type?.includes("Finais") ||
                           (comp.type === "Final AA" && activeTab === "AA") ||
                           (comp.type === "Final TF" && activeTab === "TF")) &&
                         i === 0 && (
-                          <span className="text-5xl" title="Ouro">
+                          <span className="text-6xl" title="Ouro">
                             🥇
                           </span>
                         )}
@@ -791,7 +854,7 @@ export default function CompetitionDetail() {
                           (comp.type === "Final AA" && activeTab === "AA") ||
                           (comp.type === "Final TF" && activeTab === "TF")) &&
                         i === 1 && (
-                          <span className="text-5xl" title="Prata">
+                          <span className="text-6xl" title="Prata">
                             🥈
                           </span>
                         )}
@@ -800,7 +863,7 @@ export default function CompetitionDetail() {
                           (comp.type === "Final AA" && activeTab === "AA") ||
                           (comp.type === "Final TF" && activeTab === "TF")) &&
                         i === 2 && (
-                          <span className="text-5xl" title="Bronze">
+                          <span className="text-6xl" title="Bronze">
                             🥉
                           </span>
                         )}
@@ -812,46 +875,39 @@ export default function CompetitionDetail() {
                         i < 3
                       ) && String(i + 1).padStart(2, "0")}
                     </span>
-                    <div>
-                      <p className="font-black text-4xl leading-tight text-white uppercase truncate max-w-[500px]">
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={clsx(
+                          "font-black leading-none text-white uppercase tracking-tighter whitespace-nowrap truncate",
+                          downloadingImg === "3:4" ? "text-3xl" : "text-4xl"
+                        )}
+                      >
                         {s.gymnastName}
                       </p>
-                      <p className="text-2xl text-slate-500 mt-2 truncate uppercase tracking-widest font-bold">
+                      <p className={clsx(
+                        "text-neutral-500 uppercase tracking-widest font-mono font-bold truncate",
+                        downloadingImg === "3:4" ? "text-lg mt-1" : "text-xl mt-2"
+                      )}>
                         {s.team || "Independente"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-8 shrink-0 ml-4">
-                    {!s.isTF && !s.isAA && (
-                      <div className="text-right mr-4">
-                        <p className="text-xl text-slate-500 uppercase mb-1 font-bold">
-                          D+E
-                        </p>
-                        <p className="font-mono text-2xl text-slate-400">
-                          {s.dScore?.toFixed(2)} + {s.eScore?.toFixed(2)}
-                        </p>
-                      </div>
-                    )}
-                    <div
-                      className={clsx(
-                        "px-8 py-4 rounded-2xl border text-right",
-                        i === 0
-                          ? "bg-yellow-400/10 border-yellow-400/30"
-                          : "bg-black/40 border-white/10",
-                      )}
-                    >
+                  <div className="flex items-center justify-end shrink-0 ml-4 pr-2">
+                    <div className={clsx("shrink-0 text-right", downloadingImg === "3:4" ? "w-[140px]" : "w-[170px]")}>
                       <p
                         className={clsx(
-                          "text-xl uppercase font-black tracking-tighter mb-1",
-                          i === 0 ? "text-yellow-500" : "text-slate-500",
+                          "uppercase font-mono font-bold tracking-[0.2em]",
+                          downloadingImg === "3:4" ? "text-base mb-1" : "text-lg mb-2",
+                          i === 0 ? "text-yellow-500" : "text-neutral-500",
                         )}
                       >
-                        Total
+                        TOTAL
                       </p>
                       <p
                         className={clsx(
-                          "text-5xl font-mono font-black",
+                          "font-black leading-none",
+                          downloadingImg === "3:4" ? "text-4xl" : "text-5xl",
                           i === 0 ? "text-yellow-400" : "text-white",
                         )}
                       >
@@ -864,10 +920,17 @@ export default function CompetitionDetail() {
             </div>
 
             {/* Footer */}
-            <div className="mt-8 text-center opacity-40">
-              <p className="text-2xl font-bold uppercase tracking-widest text-white">
-                Powered by GymStars
-              </p>
+            <div className={clsx(
+              "mt-auto border-t-2 border-neutral-800 w-full flex justify-between items-end",
+              downloadingImg === "3:4" ? "pt-4 pb-4" : "pt-8 pb-8"
+            )}>
+              <div className="font-mono text-neutral-500 uppercase tracking-widest flex flex-col">
+                 <span className="text-white font-black">// TELEMETRIA GYMSTARS BRASIL</span>
+                 <span className="text-xs">TODOS OS DIREITOS RESERVADOS</span>
+              </div>
+              <div className="font-black text-4xl uppercase tracking-tighter text-neutral-800 break-words w-1/2 text-right">
+                {comp.name}
+              </div>
             </div>
           </div>
         </div>

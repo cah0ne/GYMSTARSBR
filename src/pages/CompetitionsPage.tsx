@@ -197,21 +197,21 @@ export default function CompetitionsPage() {
 
   const getStatusColor = (status: string) => {
     if (status === "ao vivo")
-      return "text-red-500 bg-red-500/10 border-red-500/20";
+      return "text-green-400 bg-green-500/10 border-green-500/50";
     if (status === "encerrada")
-      return "text-slate-400 bg-slate-800 border-slate-700";
-    return "text-blue-400 bg-blue-500/10 border-blue-500/20";
+      return "text-neutral-500 bg-black border-neutral-800";
+    return "text-white bg-white/5 border-white/20";
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-6">
         <div>
-          <h1 className="text-3xl font-black text-white italic uppercase tracking-tighter">
+          <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none mb-2">
             Competições
           </h1>
-          <p className="text-neutral-400">
-            Acompanhe todos os eventos de ginástica.
+          <p className="text-neutral-400 font-mono text-xs uppercase tracking-widest pl-1">
+            // Eventos e rankings
           </p>
         </div>
         {isAdmin && (
@@ -227,9 +227,11 @@ export default function CompetitionsPage() {
               });
               setShowModal(true);
             }}
-            className="flex items-center gap-2 bg-[#009c3b] hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors w-fit shadow-lg shadow-green-950/20"
+            className="group flex items-center gap-3 bg-white text-black px-6 py-3 rounded-none font-bold uppercase tracking-widest text-xs hover:bg-green-400 transition-colors relative overflow-hidden"
           >
-            <Plus className="w-5 h-5" /> Criar Competição
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+            <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" /> 
+            <span>CRIAR EVENTO</span>
           </button>
         )}
       </div>
@@ -246,69 +248,78 @@ export default function CompetitionsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {competitions.map((c, i) => (
           <motion.div
             key={c.id}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: i * 0.05, ease: "easeOut" }}
             className="relative group flex flex-col h-full"
           >
             <Link
               to={`/competitions/${c.id}`}
-              className={`block bg-slate-900 border border-neutral-800 p-5 rounded-2xl hover:border-green-500/50 transition-colors h-full flex flex-col ${isAdmin ? "pb-16" : "pb-5"}`}
+              className={`block bg-transparent border-t-2 border-b-2 border-neutral-800 p-6 hover:border-white transition-colors h-full flex flex-col relative overflow-hidden ${isAdmin ? "pb-20" : "pb-6"}`}
             >
-              <div className="flex justify-between items-start mb-4">
+              {/* Subtle grid background on hover */}
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-0 group-hover:opacity-10 transition-opacity mix-blend-overlay"></div>
+              
+              <div className="flex justify-between items-start mb-6 z-10">
                 <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold border uppercase tracking-wider ${getStatusColor(c.status)}`}
+                  className={`px-3 py-1 font-mono text-[10px] uppercase font-black tracking-[0.2em] border ${getStatusColor(c.status)}`}
                 >
-                  {c.status}
+                  {c.status === "ao vivo" ? "AO VIVO" : c.status === "encerrada" ? "ENCERRADA" : "FUTURA"}
                 </span>
-                <span className="text-xs font-medium text-slate-500 bg-black/40 px-2.5 py-1 rounded-md">
+                <span className="text-[10px] font-mono text-neutral-400 border border-neutral-800 px-2.5 py-1 tracking-widest uppercase">
                   {c.type}
                 </span>
               </div>
-              <h2 className="text-xl font-black italic uppercase tracking-tighter mb-2 flex-1">
+              <h2 className="text-2xl font-black uppercase tracking-tighter mb-4 flex-1 leading-none text-neutral-100 group-hover:text-white transition-colors z-10 w-4/5">
                 {c.name}
               </h2>
-              <div className="flex items-center gap-2 text-sm text-neutral-400 mt-4">
-                <Calendar className="w-4 h-4" />
-                <span>
+              <div className="flex items-center gap-4 text-xs font-mono text-neutral-500 mt-4 border-t border-neutral-900 pt-4 z-10">
+                <span className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-neutral-600 rounded-full"></span>
                   {c.date
-                    ? format(new Date(c.date + "T12:00:00"), "dd/MM/yyyy", {
+                    ? format(new Date(c.date + "T12:00:00"), "dd.MM.yyyy", {
                         locale: ptBR,
                       })
-                    : "Data não definida"}
-                  {c.time ? ` às ${c.time}` : ""}
+                    : "--.--.----"}
                 </span>
+                {c.time && (
+                  <span className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-neutral-600 rounded-full"></span>
+                    {c.time}
+                  </span>
+                )}
               </div>
             </Link>
 
             {isAdmin && (
-              <div className="absolute bottom-4 left-5 right-5 flex justify-end items-center gap-2 border-t border-slate-800/40 pt-3">
+              <div className="absolute bottom-6 left-6 right-6 flex justify-end items-center gap-2 z-20">
                 {deleteConfirmId === c.id ? (
-                  <div className="flex gap-1.5 items-center bg-slate-950 px-2 py-1 rounded-lg border border-red-500/30">
-                    <span className="text-[10px] text-red-400 font-extrabold mr-0.5">
-                      Excluir?
+                  <div className="flex gap-2 items-center bg-black px-3 py-1.5 border border-red-500/50">
+                    <span className="text-[10px] text-red-500 font-mono font-bold uppercase tracking-widest mr-2">
+                      Confirmar?
                     </span>
                     <button
                       onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        executeDelete(c.id, c.name);
+                         e.preventDefault();
+                         e.stopPropagation();
+                         executeDelete(c.id, c.name);
                       }}
-                      className="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded text-[10px] font-extrabold transition-colors cursor-pointer"
+                      className="text-white hover:text-red-400 font-mono text-[10px] font-bold uppercase cursor-pointer transition-colors"
                     >
                       Sim
                     </button>
+                    <span className="text-neutral-700">/</span>
                     <button
                       onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDeleteConfirmId(null);
+                         e.preventDefault();
+                         e.stopPropagation();
+                         setDeleteConfirmId(null);
                       }}
-                      className="bg-slate-800 hover:bg-slate-700 text-slate-350 px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer"
+                      className="text-neutral-400 hover:text-white font-mono text-[10px] font-bold uppercase cursor-pointer transition-colors"
                     >
                       Não
                     </button>
@@ -317,23 +328,23 @@ export default function CompetitionsPage() {
                   <>
                     <button
                       onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleEditClick(c);
+                         e.preventDefault();
+                         e.stopPropagation();
+                         handleEditClick(c);
                       }}
-                      className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-slate-700 cursor-pointer"
+                      className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-white px-3 py-1 border border-neutral-800 hover:border-neutral-500 bg-black cursor-pointer transition-colors"
                     >
-                      <Pencil className="w-3.5 h-3.5 text-indigo-400" /> Editar
+                      Editar
                     </button>
                     <button
                       onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setDeleteConfirmId(c.id);
+                         e.preventDefault();
+                         e.stopPropagation();
+                         setDeleteConfirmId(c.id);
                       }}
-                      className="flex items-center gap-1 bg-red-950/40 hover:bg-red-900/50 text-red-400 hover:text-red-350 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-900/30 cursor-pointer"
+                      className="font-mono text-[10px] font-bold uppercase tracking-widest text-red-500/70 hover:text-red-500 px-3 py-1 border border-red-900/30 hover:border-red-500/50 bg-black cursor-pointer transition-colors"
                     >
-                      <Trash2 className="w-3.5 h-3.5" /> Excluir
+                      Excluir
                     </button>
                   </>
                 )}
@@ -342,8 +353,11 @@ export default function CompetitionsPage() {
           </motion.div>
         ))}
         {competitions.length === 0 && (
-          <div className="col-span-full py-12 text-center text-neutral-500">
-            Nenhuma competição cadastrada no momento.
+          <div className="col-span-full py-20 text-center flex flex-col items-center justify-center">
+             <div className="text-neutral-800 font-mono text-sm tracking-widest mb-2">[SEM_EVENTOS]</div>
+             <div className="text-neutral-500 font-mono text-xs max-w-sm">
+                Nenhuma competição cadastrada no momento. Crie um novo evento para iniciar.
+             </div>
           </div>
         )}
       </div>
