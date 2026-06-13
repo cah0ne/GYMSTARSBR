@@ -823,36 +823,49 @@ export default function HomePage() {
                       {gymnast.team || "Independente"}
                     </p>
 
-                    <div className="flex items-center gap-3 mt-2">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-sm font-black text-white">
-                          {gymnast.totalMedals}
-                        </span>
-                        <span className="text-[9px] text-slate-500 uppercase tracking-widest">
+                    <div className="flex items-center gap-4 mt-3">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-neutral-500 uppercase font-mono font-black tracking-widest">
                           Totais
                         </span>
+                        <span className="text-lg font-black text-white leading-none tabular-nums">
+                          {gymnast.totalMedals}
+                        </span>
                       </div>
+
                       {(gymnast.gold > 0 ||
                         gymnast.silver > 0 ||
                         gymnast.bronze > 0) && (
-                        <div className="flex items-center gap-1.5 opacity-80">
+                        <div className="flex gap-2">
                           {gymnast.gold > 0 && (
-                            <span className="text-xs font-bold text-yellow-500 flex items-center gap-0.5">
-                              <span className="text-[10px]">🥇</span>
-                              {gymnast.gold}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3.5 h-3.5 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
+                                <div className="w-1 h-1 rounded-full bg-yellow-500" />
+                              </span>
+                              <span className="text-xs font-bold text-slate-300 tabular-nums">
+                                {gymnast.gold}
+                              </span>
+                            </div>
                           )}
                           {gymnast.silver > 0 && (
-                            <span className="text-xs font-bold text-slate-300 flex items-center gap-0.5">
-                              <span className="text-[10px]">🥈</span>
-                              {gymnast.silver}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3.5 h-3.5 rounded-full bg-slate-400/20 border border-slate-400/50 flex items-center justify-center">
+                                <div className="w-1 h-1 rounded-full bg-slate-300" />
+                              </span>
+                              <span className="text-xs font-bold text-slate-300 tabular-nums">
+                                {gymnast.silver}
+                              </span>
+                            </div>
                           )}
                           {gymnast.bronze > 0 && (
-                            <span className="text-xs font-bold text-orange-500 flex items-center gap-0.5">
-                              <span className="text-[10px]">🥉</span>
-                              {gymnast.bronze}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3.5 h-3.5 rounded-full bg-orange-500/20 border border-orange-500/50 flex items-center justify-center">
+                                <div className="w-1 h-1 rounded-full bg-orange-500" />
+                              </span>
+                              <span className="text-xs font-bold text-slate-300 tabular-nums">
+                                {gymnast.bronze}
+                              </span>
+                            </div>
                           )}
                         </div>
                       )}
